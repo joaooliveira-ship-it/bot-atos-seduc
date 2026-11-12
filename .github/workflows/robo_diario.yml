@@ -1,0 +1,40 @@
+name: Rotina Diaria - Extracao de Atos SEDUC-MT
+
+on:
+  schedule:
+    # Roda todos os dias às 10:00 UTC (06:00 da manhã no horário de Mato Grosso)
+    - cron: '0 10 * * *'
+  workflow_dispatch: # Permite rodar manualmente clicando em um botão
+
+jobs:
+  executar-bot:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # Permissão para salvar o Excel de volta no repositório
+
+    steps:
+      - name: Baixar arquivos do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar o Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar bibliotecas
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium --with-deps
+
+      - name: Executar o Robô de Extração
+        run: |
+          python extrair_atos.py
+
+      - name: Salvar planilha atualizada no GitHub
+        run: |
+          git config --global user.name "Robo SEDUC Bot"
+          git config --global user.email "bot@githubactions.local"
+          git add Atos_Instituicoes_MatoGrosso.xlsx
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto: Planilha atualizada [skip ci]" && git push)
