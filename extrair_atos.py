@@ -5,42 +5,46 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
-# Lista de instituições que você deseja monitorar
 codigos = [96]
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
 
 print("=" * 80)
-print("INICIANDO BOT DIÁRIO NA NUVEM (GITHUB ACTIONS)")
+print("INICIANDO BOT DIÁRIO NA NUVEM (VERSÃO OTIMIZADA)")
 print("=" * 80 + "\n")
 
 with sync_playwright() as p:
-  browser = p.chromium.launch(headless=True)
+  # Inicia o Chromium configurado para servidores na nuvem
+  browser = p.chromium.launch(
+      headless=True,
+      args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+  )
   page = browser.new_page()
+  page.set_default_timeout(15000)  # Evita qualquer travamento infinito
 
   for i, cod in enumerate(codigos, start=1):
     url = f"http://sigeduca.seduc.mt.gov.br/cee/wmceeinfinstensino.aspx?{cod}"
     print(f"[{i}/{len(codigos)}] Consultando instituição {cod}...")
 
     try:
-      page.goto(url, timeout=45000)
-      page.wait_for_load_state("domcontentloaded")
+      page.goto(url, timeout=30000)
       time.sleep(2)
 
+      # Duplo clique para carregar a aba de atos
       botao = page.locator("input[name='BTATOSDAINSTITUICAO']")
-      botao.click()
-      time.sleep(1.5)
-      botao.click()
-      page.wait_for_timeout(6000)
+      botao.click(force=True)
+      time.sleep(1)
+      botao.click(force=True)
+      time.sleep(4)
 
       # 1. Identifica Nome da Instituição
       soup_inicial = BeautifulSoup(page.content(), "html.parser")
       nome_escola = "Não identificado"
       linhas_geral = [
-          linha.strip()
-          for linha in soup_inicial.get_text(separator=" \n ").splitlines()
-          if linha.strip()
+          l.strip()
+          for l in soup_inicial.get_text(separator=" \n ").splitlines()
+          if l.strip()
       ]
       for idx, l in enumerate(linhas_geral):
         if (
@@ -50,31 +54,31 @@ with sync_playwright() as p:
           cands = []
           if ":" in l:
             cands.append(l.split(":", 1)[-1].strip())
-          for off in [1, 2, 3]:
+          for off in [1, 2]:
             if idx + off < len(linhas_geral):
               cands.append(linhas_geral[idx + off].strip())
           for c in cands:
             c_limpo = re.sub(r"^\d+\s*[-–]?\s*", "", c).strip()
             c_limpo = re.split(
                 r"MUNIC[ÍI]PIO", c_limpo, flags=re.IGNORECASE
-            ).strip()
+            )[0].strip()
             if c_limpo and not c_limpo.isdigit() and len(c_limpo) > 3:
               nome_escola = c_limpo
               break
           if nome_escola != "Não identificado":
             break
 
-      # 2. Total de páginas
+      # 2. Descobre seletor de paginação
       total_paginas = 1
-      select_pag = None
+      select_id = None
       selects = page.locator("select")
       for s_idx in range(selects.count()):
         sel = selects.nth(s_idx)
         valores = sel.locator("option").all_inner_texts()
         num_opts = [v.strip() for v in valores if v.strip().isdigit()]
         if len(num_opts) > 1:
-          select_pag = sel
           total_paginas = len(num_opts)
+          select_id = sel.get_attribute("id") or sel.get_attribute("name")
           print(f"   ✓ Instituição possui {total_paginas} páginas de atos.")
           break
 
@@ -184,22 +188,25 @@ with sync_playwright() as p:
 
         return atos_pag
 
-      # 3. Navegação pelas páginas
+      # 3. Varredura rápida página por página via JavaScript
       for num_p in range(1, total_paginas + 1):
+        print(f"   -> Extraindo Página {num_p} de {total_paginas}...")
+
         if num_p > 1:
-          btn_proximo = page.locator(
-              "a:has-text('Próximo'), a:has-text('Proximo'),"
-              " span:has-text('Próximo')"
-          )
-          if btn_proximo.count() > 0 and btn_proximo.first.is_visible():
-            btn_proximo.first.click()
-          elif select_pag:
-            select_pag.select_option(str(num_p))
-            select_pag.dispatch_event("change")
-          page.wait_for_timeout(3500)
+          # Muda de página via JavaScript nativo do GeneXus sem travar o Playwright
+          page.evaluate(f"""() => {{
+                        const selects = Array.from(document.querySelectorAll('select'));
+                        const sel = selects.find(s => Array.from(s.options).some(o => o.value == '{num_p}' || o.text == '{num_p}'));
+                        if (sel) {{
+                            sel.value = '{num_p}';
+                            sel.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+                    }}""")
+          time.sleep(2)
 
         html_atual = page.content()
         atos_coletados = extrair_atos_pagina_atual(html_atual)
+        print(f"      ✓ {len(atos_coletados)} atos capturados.")
         todos_atos.extend(atos_coletados)
 
       print(f"   >> Concluída coleta da instituição {cod}.")
@@ -260,50 +267,3 @@ if todos_atos:
   print(f"✓ Base atualizada com {len(df_final)} cursos salvos em Excel.")
 else:
   print("Nenhum ato novo encontrado.")
-print("Nenhum ato novo encontrado.")
-Passo 2: Criar o agendamento (.github/workflows/robo_diario.yml)
-Clique novamente em Add file > Create new file.
-No campo name your file..., cole exatamente este texto (com as barras):
-.github/workflows/robo_diario.yml
-(Ao digitar a barra /, o GitHub criará as pastas automaticamente!)
-Na caixa de texto grande abaixo, cole a configuração do agendamento diário:
-name: Rotina Diaria - Extracao de Atos SEDUC-MT
-
-on:
-  schedule:
-    # Roda todos os dias às 10:00 UTC (06:00 da manhã no horário de Mato Grosso)
-    - cron: '0 10 * * *'
-  workflow_dispatch: # Permite rodar manualmente clicando em um botão
-
-jobs:
-  executar-bot:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write # Permissão para salvar o Excel de volta no repositório
-
-    steps:
-      - name: Baixar arquivos do repositório
-        uses: actions/checkout@v4
-
-      - name: Configurar o Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Instalar bibliotecas
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          playwright install chromium --with-deps
-
-      - name: Executar o Robô de Extração
-        run: |
-          python extrair_atos.py
-
-      - name: Salvar planilha atualizada no GitHub
-        run: |
-          git config --global user.name "Robo SEDUC Bot"
-          git config --global user.email "bot@githubactions.local"
-          git add Atos_Instituicoes_MatoGrosso.xlsx
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto: Planilha atualizada [skip ci]" && git push)
