@@ -1,3 +1,20 @@
+4. **Ele faz a filtragem e resumo por Município e Curso** exatamente como você queria no final!
+
+---
+
+### O que precisamos ajustar para rodar no GitHub Actions:
+
+Apenas **duas pequenas coisas** para a nuvem do GitHub:
+1. No GitHub Actions não existe o Google Chrome instalado nativamente no canal do sistema (`channel="chrome"` daria erro), então usamos o Chromium padrão: `browser = p.chromium.launch(headless=True)`.
+2. Colocar os códigos da **Pelegrino Cipriani (96)** e da **CIENTEC (420)** juntos na linha 8: `codigos = [96, 420]`.
+
+---
+
+### Código Completo e Fiel ao seu Original (`extrair_atos.py`):
+
+Substitua todo o conteúdo do seu `extrair_atos.py` no GitHub por este código (que é **99% idêntico ao seu script original**, apenas adaptado para rodar no GitHub Actions com as duas escolas):
+
+```python
 import os
 import re
 import time
@@ -5,39 +22,49 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
-# Instituições configuradas
+# Instituições monitoradas (Pelegrino Cipriani + CIENTEC)
 codigos = [96, 420]
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
 
-print("=" * 80)
-print("INICIANDO EXTRAÇÃO CONSOLIDADA (CIPRIANI + CIENTEC)")
-print("=" * 80 + "\n")
+print(
+    "Iniciando extração com NAVEGAÇÃO REAL por todas as páginas (botão Próximo"
+    " / AJAX)...\n"
+)
 
 with sync_playwright() as p:
+  # No GitHub Actions usamos o Chromium headless nativo
   browser = p.chromium.launch(
       headless=True,
       args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
   )
   page = browser.new_page()
-  page.set_default_timeout(45000)
 
   for i, cod in enumerate(codigos, start=1):
     url = f"http://sigeduca.seduc.mt.gov.br/cee/wmceeinfinstensino.aspx?{cod}"
     print(f"[{i}/{len(codigos)}] Consultando instituição {cod}...")
 
     try:
-      page.goto(url, timeout=50000)
-      time.sleep(3)
+      page.goto(url, timeout=35000)
+      page.wait_for_load_state("domcontentloaded")
+      time.sleep(2)
 
-      # 1. Identifica Nome da Instituição na página inicial
+      botao = page.locator("input[name='BTATOSDAINSTITUICAO']")
+
+      # Duplo clique para carregar a aba de atos (do seu código original)
+      botao.click()
+      time.sleep(1.5)
+      botao.click()
+      page.wait_for_timeout(6000)
+
+      # 1. Identifica Nome da Instituição
       soup_inicial = BeautifulSoup(page.content(), "html.parser")
-      nome_escola = f"Instituição {cod}"
+      nome_escola = "Não identificado"
       linhas_geral = [
-          l.strip()
-          for l in soup_inicial.get_text(separator=" \n ").splitlines()
-          if l.strip()
+          linha.strip()
+          for linha in soup_inicial.get_text(separator=" \n ").splitlines()
+          if linha.strip()
       ]
       for idx, l in enumerate(linhas_geral):
         if (
@@ -47,7 +74,7 @@ with sync_playwright() as p:
           cands = []
           if ":" in l:
             cands.append(l.split(":", 1)[-1].strip())
-          for off in [1, 2, 3]:
+          for off in [1, 2]:
             if idx + off < len(linhas_geral):
               cands.append(linhas_geral[idx + off].strip())
           for c in cands:
@@ -58,204 +85,200 @@ with sync_playwright() as p:
             if c_limpo and not c_limpo.isdigit() and len(c_limpo) > 3:
               nome_escola = c_limpo
               break
-          if nome_escola != f"Instituição {cod}":
+          if nome_escola != "Não identificado":
             break
 
-      print(f"   Nome identificado: {nome_escola}")
-
-      # 2. Clica para abrir a aba 'ATOS DA INSTITUIÇÃO' e aguarda com segurança
-      botao = page.locator("input[name='BTATOSDAINSTITUICAO']")
-      if botao.count() > 0:
-        botao.click(force=True)
-        time.sleep(3)
-
-      # Garante que a tabela de atos realmente carregou
-      for tentativa in range(5):
-        if "ATO REGULATÓRIO" in page.content().upper():
-          break
-        if botao.count() > 0:
-          botao.click(force=True)
-        time.sleep(3)
-
-      if "ATO REGULATÓRIO" not in page.content().upper():
-        print(f"   ✗ Não foi possível carregar a grade de atos da escola {cod}.")
-        continue
-
-      # 3. Identifica total de páginas
+      # 2. Descobre quantas páginas existem no select
       total_paginas = 1
-      select_pag = page.locator("select").first
-      if select_pag.count() > 0:
-        opts = select_pag.locator("option").all_inner_texts()
-        nums = [o.strip() for o in opts if o.strip().isdigit()]
-        if len(nums) > 1:
-          total_paginas = len(nums)
+      select_pag = None
+      selects = page.locator("select")
+      for s_idx in range(selects.count()):
+        sel = selects.nth(s_idx)
+        valores = sel.locator("option").all_inner_texts()
+        num_opts = [v.strip() for v in valores if v.strip().isdigit()]
+        if len(num_opts) > 1:
+          select_pag = sel
+          total_paginas = len(num_opts)
+          print(
+              f"   ✓ Instituição possui {total_paginas} páginas reais de atos."
+          )
+          break
 
-      print(f"   ✓ Total de páginas identificadas: {total_paginas}")
-
-      # 4. Função de extração de cada ato
-      def extrair_atos(conteudo_html):
+      # Função de extração de dados
+      def extrair_atos_pagina_atual(conteudo_html):
         soup = BeautifulSoup(conteudo_html, "html.parser")
-        texto_pagina = soup.get_text("\n")
+        elementos = soup.find_all(["table", "div"])
         atos_pag = []
 
         rotulos = [
             "Ato Regulatório",
             "Situação",
-            "Município do Curso",
             "Curso",
+            "Município do Curso",
             "Modelo de Documento",
-            "Tipo de Documento",
             "Nº Documento",
             "Validade",
             "Data de Publicação",
             r"Pág\.",
-            "Página da Publicação",
             "Parecer",
-            "Jornal de Circulação",
+            "Ato",
         ]
+        padrao_delimitador = r"(?=(?:" + "|".join(rotulos) + r")\s*:|$)"
 
-        blocos = re.split(r"(?i)(?=ATO\s+REGULAT[ÓO]RIO\s*:)", texto_pagina)
-
-        for b in blocos:
-          if "ATO REGULATÓRIO:" not in b.upper():
-            continue
-
-          def pegar_campo(label, texto):
-            rotulos_sem_ele = [r for r in rotulos if r.lower() != label.lower()]
-            padrao_fim = (
-                r"(?=(?:\b(?:"
-                + "|".join(rotulos_sem_ele)
-                + r")\s*:|\bAto\s*:|\bAto Antigo\s*:|$))"
-            )
-            if label.lower() == "curso":
-              p = (
-                  rf"(?<!Munic[íi]pio do\s)(?<!Munic[íi]pio do"
-                  rf" )\bCurso\s*:\s*(.*?){padrao_fim}"
-              )
-            else:
-              p = rf"\b{label}\s*:\s*(.*?){padrao_fim}"
-
-            m = re.search(p, texto, flags=re.IGNORECASE | re.DOTALL)
-            if m:
-              lns = [
-                  l.strip()
-                  for l in m.group(1).strip().splitlines()
-                  if l.strip()
-              ]
-              return " ".join(lns)
-            return ""
-
-          curso_bruto = pegar_campo("Curso", b)
-          curso_limpo = re.sub(r"\s+", " ", curso_bruto).strip()
-
-          if not curso_limpo or curso_limpo in ["-", "--", "NÃO INFORMADO"]:
-            continue
-
-          texto_curso = curso_limpo.upper()
-          if not (
-              "TECNICO" in texto_curso
-              or "TÉCNICO" in texto_curso
-              or "PROFISSIONAL" in texto_curso
-          ):
-            continue
-
-          situacao = pegar_campo("Situação", b)
+        for elem in elementos:
+          txt = elem.get_text(separator="\n", strip=True)
           if (
-              "NÃO AUTORIZADO" in situacao.upper()
-              or "NAO AUTORIZADO" in situacao.upper()
+              "ATO REGULATÓRIO:" in txt.upper()
+              and "MODELO DE DOCUMENTO:" in txt.upper()
           ):
-            continue
+            if (
+                "MOSTRAR ATOS:" in txt.upper()
+                or txt.upper().count("ATO REGULATÓRIO:") > 1
+            ):
+              continue
 
-          ato_reg = pegar_campo("Ato Regulatório", b)
+            def pegar_campo(nome_label, texto):
+              p = rf"{nome_label}\s*:\s*(.*?){padrao_delimitador}"
+              m = re.search(p, texto, flags=re.IGNORECASE | re.DOTALL)
+              if m:
+                lns = [
+                    l.strip()
+                    for l in m.group(1).strip().splitlines()
+                    if l.strip()
+                ]
+                return " ".join(lns)
+              return ""
 
-          mun_curso = pegar_campo("Município do Curso", b)
-          mun_limpo = re.sub(r"[\r\n\t]+", " ", mun_curso).strip().upper()
-          mun_limpo = re.sub(r"\s+", " ", mun_limpo)
-          if not mun_limpo or mun_limpo in ["-", "--"]:
-            mun_limpo = (
-                "CUIABÁ"
-                if cod == 96
-                else ("SINOP" if cod == 420 else "NÃO INFORMADO")
-            )
+            curso_bruto = pegar_campo("Curso", txt)
+            curso_limpo = re.sub(r"\s+", " ", curso_bruto).strip()
 
-          validade = pegar_campo("Validade", b)
-          data_pub = pegar_campo("Data de Publicação", b)
+            # Descarta se não houver nome de curso
+            if not curso_limpo or curso_limpo in ["-", "--", "NÃO INFORMADO"]:
+              continue
 
-          todas_datas = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", validade)
-          if todas_datas:
-            data_fim_ref = todas_datas[-1]
-          else:
-            datas_pub = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", data_pub)
-            data_fim_ref = datas_pub[-1] if datas_pub else "01/01/1900"
+            # Mantém Cursos Técnicos / Educação Profissional
+            texto_curso = curso_limpo.upper()
+            if not (
+                "TECNICO" in texto_curso
+                or "TÉCNICO" in texto_curso
+                or "PROFISSIONAL" in texto_curso
+            ):
+              continue
 
-          modelo_doc = pegar_campo("Modelo de Documento", b) or pegar_campo(
-              "Tipo de Documento", b
-          )
-          num_doc = pegar_campo("Nº Documento", b)
-          pag = pegar_campo(r"Pág\.", b) or pegar_campo(
-              "Página da Publicação", b
-          )
+            situacao = pegar_campo("Situação", txt)
+            if (
+                "NÃO AUTORIZADO" in situacao.upper()
+                or "NAO AUTORIZADO" in situacao.upper()
+            ):
+              continue
 
-          item = {
-              "Código Instituição": cod,
-              "Nome da Instituição": nome_escola,
-              "Município do Curso": mun_limpo,
-              "Curso": curso_limpo,
-              "Ato Regulatório": ato_reg,
-              "Situação": situacao,
-              "Modelo de Documento": modelo_doc,
-              "Nº Documento": num_doc,
-              "Validade": validade,
-              "Data de Publicação": data_pub,
-              "Pág.": pag,
-              "_Data_Fim_Ref": data_fim_ref,
-          }
-          atos_pag.append(item)
+            ato_reg = pegar_campo("Ato Regulatório", txt)
+
+            # Município do Curso (Sinop, Cuiabá, Jaciara, etc.)
+            mun_curso = pegar_campo("Município do Curso", txt)
+            mun_limpo = re.sub(r"[\r\n\t]+", " ", mun_curso).strip().upper()
+            mun_limpo = re.sub(r"\s+", " ", mun_limpo)
+            if not mun_limpo or mun_limpo in ["-", "--"]:
+              mun_limpo = "CUIABÁ" if cod == 96 else "SINOP"
+
+            validade = pegar_campo("Validade", txt)
+            data_pub = pegar_campo("Data de Publicação", txt)
+
+            todas_datas = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", validade)
+            if todas_datas:
+              data_fim_ref = todas_datas[-1]
+            else:
+              datas_pub = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", data_pub)
+              data_fim_ref = datas_pub[-1] if datas_pub else "01/01/1900"
+
+            modelo_doc = pegar_campo("Modelo de Documento", txt)
+            num_doc = pegar_campo("Nº Documento", txt)
+            pag = pegar_campo(r"Pág\.", txt)
+
+            item = {
+                "Código Instituição": cod,
+                "Nome da Instituição": nome_escola,
+                "Município do Curso": mun_limpo,
+                "Curso": curso_limpo,
+                "Ato Regulatório": ato_reg,
+                "Situação": situacao,
+                "Modelo de Documento": modelo_doc,
+                "Nº Documento": num_doc,
+                "Validade": validade,
+                "Data de Publicação": data_pub,
+                "Pág.": pag,
+                "_Data_Fim_Ref": data_fim_ref,
+            }
+            atos_pag.append(item)
 
         return atos_pag
 
-      # 5. Varredura das páginas
-      atos_escola_atual = []
+      # 3. Varredura com avanço real página por página (IDÊNTICO AO SEU)
       for num_p in range(1, total_paginas + 1):
+        print(f"   -> Extraindo Página {num_p} de {total_paginas}...")
+
         if num_p > 1:
-          seletor = page.locator("select").first
-          if seletor.count() > 0:
-            seletor.select_option(str(num_p))
-            page.evaluate("""() => {
-                            const sel = document.querySelector('select');
-                            if (sel) {
-                                sel.dispatchEvent(new Event('change', { bubbles: true }));
-                                if (typeof gx !== 'undefined' && gx.evt) {
-                                    gx.evt.onchange(sel);
-                                }
-                            }
-                        }""")
-            time.sleep(3.5)
+          # Clica no link 'Próximo' para forçar a troca no GeneXus
+          btn_proximo = page.locator(
+              "a:has-text('Próximo'), a:has-text('Proximo'),"
+              " span:has-text('Próximo')"
+          )
+          if btn_proximo.count() > 0 and btn_proximo.first.is_visible():
+            btn_proximo.first.click()
+          elif select_pag:
+            select_pag.select_option(str(num_p))
+            select_pag.dispatch_event("change")
+
+          page.wait_for_timeout(4000)
 
         html_atual = page.content()
-        atos_pag = extrair_atos(html_atual)
-        atos_escola_atual.extend(atos_pag)
+        atos_coletados = extrair_atos_pagina_atual(html_atual)
+
+        if atos_coletados:
+          doc_atual = atos_coletados[0]["Nº Documento"]
+          mun_atual = atos_coletados[0]["Município do Curso"]
+          print(
+              f"      ✓ {len(atos_coletados)} atos capturados (Ex: {mun_atual} -"
+              f" Doc: {doc_atual})"
+          )
+        else:
+          print("      - Nenhum curso técnico nesta página.")
+
+        todos_atos.extend(atos_coletados)
 
       print(
-          f"   >> Concluída instituição {cod}: {len(atos_escola_atual)} atos"
-          " técnicos encontrados no total.\n"
+          f"\n   >> Coleta concluída para escola {cod}: {len(todos_atos)}"
+          " registros brutos.\n"
       )
-      todos_atos.extend(atos_escola_atual)
 
     except Exception as e:
-      print(f"   ✗ Erro ao processar instituição {cod}: {e}\n")
+      print(f"   ✗ Erro no código {cod}: {e}\n")
 
   browser.close()
 
-# 6. Gravação Final Consolidada (Cipriani + CIENTEC)
+# 4. FILTRAGEM: ATO MAIS RECENTE POR (MUNICÍPIO + CURSO TÉCNICO)
 if todos_atos:
-  df_novos = pd.DataFrame(todos_atos)
-  df_novos["Data_Comparacao"] = pd.to_datetime(
-      df_novos["_Data_Fim_Ref"], format="%d/%m/%Y", errors="coerce"
+  df = pd.DataFrame(todos_atos)
+
+  # Remove duplicatas brutas idênticas
+  df = df.drop_duplicates(
+      subset=[
+          "Código Instituição",
+          "Município do Curso",
+          "Curso",
+          "Nº Documento",
+          "Validade",
+      ]
+  )
+  print(f"Total bruto de atos técnicos capturados: {len(df)}")
+
+  # Converte data para ordenação cronológica
+  df["Data_Comparacao"] = pd.to_datetime(
+      df["_Data_Fim_Ref"], format="%d/%m/%Y", errors="coerce"
   )
 
-  # Ordena pela data mais recente
-  df_consolidado = df_novos.sort_values(
+  # Ordena da maior validade (mais recente) para a menor
+  df = df.sort_values(
       by=[
           "Código Instituição",
           "Município do Curso",
@@ -265,23 +288,47 @@ if todos_atos:
       ascending=[True, True, True, False],
   )
 
-  # Mantém o ato mais recente de cada curso por instituição
-  df_final = df_consolidado.drop_duplicates(
+  # Mantém SOMENTE o ato mais recente de cada par (Município + Curso Técnico)
+  df_mais_recentes = df.drop_duplicates(
       subset=["Código Instituição", "Município do Curso", "Curso"], keep="first"
   ).copy()
 
-  colunas_limpar = ["_Data_Fim_Ref", "Data_Comparacao"]
-  df_final = df_final.drop(
-      columns=[c for c in colunas_limpar if c in df_final.columns]
+  df_final = df_mais_recentes.drop(
+      columns=["_Data_Fim_Ref", "Data_Comparacao"]
   )
 
+  # Ordena as colunas
+  colunas_ordenadas = [
+      "Código Instituição",
+      "Nome da Instituição",
+      "Município do Curso",
+      "Curso",
+      "Ato Regulatório",
+      "Situação",
+      "Modelo de Documento",
+      "Nº Documento",
+      "Validade",
+      "Data de Publicação",
+      "Pág.",
+  ]
+  df_final = df_final[[c for c in colunas_ordenadas if c in df_final.columns]]
+
+  # Salva na planilha Excel
   df_final.to_excel(arquivo_saida, index=False)
   print("=" * 80)
   print(
-      f"✓ SUCESSO: Planilha gerada com {len(df_final)} cursos salvos em"
-      f" '{arquivo_saida}'!"
+      f"✓ Sucesso! {len(df_final)} cursos técnicos únicos gravados em"
+      f" '{arquivo_saida}'."
   )
-  print(f"Instituições presentes na planilha: {df_final['Código Instituição'].unique()}")
   print("=" * 80)
+
+  # Resumo de todas as cidades encontradas
+  cidades = sorted(df_final["Município do Curso"].unique())
+  print(f"\nTotal de cidades/polos identificados: {len(cidades)}")
+  print("Cidades capturadas:")
+  for cid in cidades:
+    qtd = len(df_final[df_final["Município do Curso"] == cid])
+    print(f" - {cid} ({qtd} cursos)")
+
 else:
-  print("Nenhum ato novo encontrado.")
+  print("Nenhum curso técnico encontrado.")
