@@ -1,4 +1,4 @@
-name: Rotina Diaria - Extracao de Atos SEDUC-MT
+name: Rotina Diaria - Extracao de Atos
 
 on:
   schedule:
@@ -6,28 +6,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  executar-bot:
+  executar-robo:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     steps:
-      - name: Baixar arquivos do repositório
+      - name: Baixar o repositorio
         uses: actions/checkout@v4
 
-      - name: Configurar o Python
+      - name: Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Instalar bibliotecas e dependencias do Playwright
+      - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           playwright install --with-deps chromium
 
-     - name: Executar o Robô de Extração
+      - name: Executar o Robo de Extracao
         env:
           URL_GOOGLE_PLANILHA: ${{ secrets.URL_GOOGLE_PLANILHA }}
         run: |
