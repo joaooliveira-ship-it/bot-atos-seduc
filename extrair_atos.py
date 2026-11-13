@@ -260,7 +260,7 @@ if todos_atos:
   print(f"✓ Base atualizada com {len(df_final)} cursos salvos em Excel.")
 else:
   print("Nenhum ato novo encontrado.")
-No canto superior direito, clique no botão verde Commit changes... e confirme no popup.
+print("Nenhum ato novo encontrado.")
 Passo 2: Criar o agendamento (.github/workflows/robo_diario.yml)
 Clique novamente em Add file > Create new file.
 No campo name your file..., cole exatamente este texto (com as barras):
