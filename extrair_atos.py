@@ -1,12 +1,13 @@
 import os
 import re
 import time
+import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
 # Instituições monitoradas (Pelegrino Cipriani + CIENTEC)
-codigos = [96, 420, 4249]
+codigos = [96, 420]
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
@@ -161,7 +162,6 @@ with sync_playwright() as p:
                 print(f"   -> Extraindo Página {num_p} de {total_paginas}...")
 
                 if num_p > 1:
-                    # Clica no link 'Próximo' para forçar a troca no GeneXus
                     btn_proximo = page.locator("a:has-text('Próximo'), a:has-text('Proximo'), span:has-text('Próximo')")
                     if btn_proximo.count() > 0 and btn_proximo.first.is_visible():
                         btn_proximo.first.click()
@@ -223,11 +223,27 @@ if todos_atos:
     ]
     df_final = df_final[[c for c in colunas_ordenadas if c in df_final.columns]]
 
-    # Salva na planilha Excel
+    # 1. Salva no arquivo Excel padrão (backup no GitHub)
     df_final.to_excel(arquivo_saida, index=False)
     print("=" * 80)
     print(f"✓ Sucesso! {len(df_final)} cursos técnicos únicos gravados em '{arquivo_saida}'.")
     print("=" * 80)
+
+    # 2. Envia para o Google Planilhas na Web (se a URL estiver configurada)
+    url_webhook = os.getenv("URL_GOOGLE_PLANILHA")
+    if url_webhook:
+        try:
+            print("Enviando dados para a planilha do Google na Web...")
+            linhas = [df_final.columns.tolist()] + df_final.fillna("").astype(str).values.tolist()
+            resp = requests.post(url_webhook, json=linhas, timeout=30)
+            if resp.status_code == 200:
+                print("✓ Sucesso: Google Planilhas atualizado na Web com sucesso!")
+            else:
+                print(f"⚠️ Aviso ao enviar para o Google: {resp.text}")
+        except Exception as err:
+            print(f"⚠️ Não foi possível sincronizar com o Google: {err}")
+    else:
+        print("ℹ️ URL_GOOGLE_PLANILHA não configurada nos Secrets. Dados salvos apenas no Excel.")
 
     # Resumo de todas as cidades encontradas
     cidades = sorted(df_final['Município do Curso'].unique())
