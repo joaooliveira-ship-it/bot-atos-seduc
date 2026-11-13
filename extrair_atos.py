@@ -6,7 +6,7 @@ import pandas as pd
 from playwright.sync_api import sync_playwright
 
 # Instituições monitoradas (Pelegrino Cipriani + CIENTEC)
-codigos =
+codigos = [96, 420]
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
@@ -46,12 +46,12 @@ with sync_playwright() as p:
                     cands = []
                     if ":" in l:
                         cands.append(l.split(":", 1)[-1].strip())
-                    for off in:
+                    for off in [1, 2]:
                         if idx + off < len(linhas_geral):
                             cands.append(linhas_geral[idx + off].strip())
                     for c in cands:
                         c_limpo = re.sub(r'^\d+\s*[-–]?\s*', '', c).strip()
-                        c_limpo = re.split(r'MUNIC[ÍI]PIO', c_limpo, flags=re.IGNORECASE).strip()
+                        c_limpo = re.split(r'MUNIC[ÍI]PIO', c_limpo, flags=re.IGNORECASE)[0].strip()
                         if c_limpo and not c_limpo.isdigit() and len(c_limpo) > 3:
                             nome_escola = c_limpo
                             break
@@ -175,8 +175,8 @@ with sync_playwright() as p:
                 atos_coletados = extrair_atos_pagina_atual(html_atual)
 
                 if atos_coletados:
-                    doc_atual = atos_coletados['Nº Documento']
-                    mun_atual = atos_coletados['Município do Curso']
+                    doc_atual = atos_coletados[0]['Nº Documento']
+                    mun_atual = atos_coletados[0]['Município do Curso']
                     print(f"      ✓ {len(atos_coletados)} atos capturados (Ex: {mun_atual} - Doc: {doc_atual})")
                 else:
                     print("      - Nenhum curso técnico nesta página.")
