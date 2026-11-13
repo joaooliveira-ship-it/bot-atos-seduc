@@ -6,7 +6,7 @@ import pandas as pd
 from playwright.sync_api import sync_playwright
 
 # Instituições configuradas para extração
-codigos = 
+codigos = [96, 420]
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
