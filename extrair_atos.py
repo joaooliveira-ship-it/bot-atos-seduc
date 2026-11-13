@@ -56,7 +56,7 @@ with sync_playwright() as p:
           cands = []
           if ":" in l:
             cands.append(l.split(":", 1)[-1].strip())
-          for off in:
+         for off in [1, 2, 3]:
             if idx + off < len(linhas_geral):
               cands.append(linhas_geral[idx + off].strip())
           for c in cands:
