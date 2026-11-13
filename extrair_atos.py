@@ -167,15 +167,11 @@ with sync_playwright() as p:
             # 4. Varredura por página
             for num_p in range(1, total_paginas + 1):
                 if num_p > 1:
-                    page.evaluate(f"""() => {{
-                        const selects = Array.from(document.querySelectorAll('select'));
-                        const sel = selects.find(s => Array.from(s.options).some(o => o.value == '{num_p}' || o.text == '{num_p}'));
-                        if (sel) {{
-                            sel.value = '{num_p}';
-                            sel.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        }}
-                    }}""")
-                    time.sleep(2.5)
+                    # Seleciona a opção diretamente via Playwright para disparar o recarregamento do portal
+                    select_pag = page.locator("select").first
+                    if select_pag.count() > 0:
+                        select_pag.select_option(str(num_p))
+                        time.sleep(3.5)
 
                 html_atual = page.content()
                 atos_coletados = extrair_atos_pagina_atual(html_atual)
