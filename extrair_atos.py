@@ -5,13 +5,14 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
-codigos = [96, 420]
+# Instituições configuradas para extração
+codigos = 
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
 
 print("=" * 80)
-print("INICIANDO BOT DIÁRIO NA NUVEM (VERSÃO DEFINITIVA UNIVERSAL)")
+print("INICIANDO BOT DIÁRIO NA NUVEM (VERSÃO DEFINITIVA CIENTEC + PELEGRINO)")
 print("=" * 80 + "\n")
 
 with sync_playwright() as p:
@@ -30,11 +31,11 @@ with sync_playwright() as p:
       page.goto(url, timeout=35000)
       time.sleep(2)
 
-      # Clica no botão para abrir a grade de atos
+      # Clica para abrir a aba 'ATOS DA INSTITUIÇÃO'
       botao = page.locator("input[name='BTATOSDAINSTITUICAO']")
       if botao.count() > 0:
         botao.click(force=True)
-        time.sleep(1.5)
+        time.sleep(2)
         if "ATO REGULATÓRIO" not in page.content().upper():
           botao.click(force=True)
       time.sleep(4)
@@ -55,7 +56,7 @@ with sync_playwright() as p:
           cands = []
           if ":" in l:
             cands.append(l.split(":", 1)[-1].strip())
-          for off in [11-13]:
+          for off in:
             if idx + off < len(linhas_geral):
               cands.append(linhas_geral[idx + off].strip())
           for c in cands:
@@ -71,7 +72,7 @@ with sync_playwright() as p:
 
       print(f"   Nome identificado: {nome_escola}")
 
-      # 2. Descobre se há paginação
+      # 2. Descobre total de páginas (se houver paginação)
       total_paginas = 1
       selects = page.locator("select")
       for s_idx in range(selects.count()):
@@ -84,17 +85,17 @@ with sync_playwright() as p:
 
       print(f"   ✓ Total de páginas identificadas: {total_paginas}")
 
-      # Função de extração de atos da tela
+      # 3. Função de extração direta por bloco de texto
       def extrair_atos_pagina_atual(conteudo_html):
         soup = BeautifulSoup(conteudo_html, "html.parser")
-        elementos = soup.find_all(["table", "div"])
+        texto_pagina = soup.get_text("\n")
         atos_pag = []
 
-        rotulos = [
+        rotulos_principais = [
             "Ato Regulatório",
             "Situação",
-            "Curso",
             "Município do Curso",
+            "Curso",
             "Modelo de Documento",
             "Tipo de Documento",
             "Nº Documento",
@@ -103,100 +104,110 @@ with sync_playwright() as p:
             r"Pág\.",
             "Página da Publicação",
             "Parecer",
-            "Ato",
+            "Jornal de Circulação",
         ]
-        padrao_delimitador = r"(?=(?:" + "|".join(rotulos) + r")\s*:|$)"
 
-        for elem in elementos:
-          txt = elem.get_text(separator="\n", strip=True)
-          if "ATO REGULATÓRIO:" in txt.upper() and (
-              "MODELO DE DOCUMENTO:" in txt.upper()
-              or "TIPO DE DOCUMENTO:" in txt.upper()
-          ):
-            if (
-                "MOSTRAR ATOS:" in txt.upper()
-                or txt.upper().count("ATO REGULATÓRIO:") > 1
-            ):
-              continue
+        # Divide o texto da página a cada início de 'Ato Regulatório:'
+        blocos = re.split(r"(?i)(?=ATO\s+REGULAT[ÓO]RIO\s*:)", texto_pagina)
 
-            def pegar_campo(nome_label, texto):
-              p = rf"{nome_label}\s*:\s*(.*?){padrao_delimitador}"
-              m = re.search(p, texto, flags=re.IGNORECASE | re.DOTALL)
-              if m:
-                lns = [
-                    l.strip()
-                    for l in m.group(1).strip().splitlines()
-                    if l.strip()
-                ]
-                return " ".join(lns)
-              return ""
+        for b in blocos:
+          if "ATO REGULATÓRIO:" not in b.upper():
+            continue
 
-            curso_bruto = pegar_campo("Curso", txt)
-            curso_limpo = re.sub(r"\s+", " ", curso_bruto).strip()
-
-            if not curso_limpo or curso_limpo in ["-", "--", "NÃO INFORMADO"]:
-              continue
-
-            texto_curso = curso_limpo.upper()
-            if not (
-                "TECNICO" in texto_curso
-                or "TÉCNICO" in texto_curso
-                or "PROFISSIONAL" in texto_curso
-            ):
-              continue
-
-            situacao = pegar_campo("Situação", txt)
-            if (
-                "NÃO AUTORIZADO" in situacao.upper()
-                or "NAO AUTORIZADO" in situacao.upper()
-            ):
-              continue
-
-            ato_reg = pegar_campo("Ato Regulatório", txt)
-
-            mun_curso = pegar_campo("Município do Curso", txt)
-            mun_limpo = re.sub(r"[\r\n\t]+", " ", mun_curso).strip().upper()
-            mun_limpo = re.sub(r"\s+", " ", mun_limpo)
-            if not mun_limpo or mun_limpo in ["-", "--"]:
-              mun_limpo = "NÃO INFORMADO"
-
-            validade = pegar_campo("Validade", txt)
-            data_pub = pegar_campo("Data de Publicação", txt)
-
-            todas_datas = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", validade)
-            if todas_datas:
-              data_fim_ref = todas_datas[-1]
-            else:
-              datas_pub = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", data_pub)
-              data_fim_ref = datas_pub[-1] if datas_pub else "01/01/1900"
-
-            modelo_doc = pegar_campo(
-                "Modelo de Documento", txt
-            ) or pegar_campo("Tipo de Documento", txt)
-            num_doc = pegar_campo("Nº Documento", txt)
-            pag = pegar_campo(r"Pág\.", txt) or pegar_campo(
-                "Página da Publicação", txt
+          def pegar_campo(label, texto):
+            rotulos_sem_ele = [
+                r for r in rotulos_principais if r.lower() != label.lower()
+            ]
+            padrao_fim = (
+                r"(?=(?:\b(?:"
+                + "|".join(rotulos_sem_ele)
+                + r")\s*:|\bAto\s*:|\bAto Antigo\s*:|$))"
             )
+            if label.lower() == "curso":
+              p = (
+                  rf"(?<!Munic[íi]pio do\s)(?<!Munic[íi]pio do"
+                  rf" )\bCurso\s*:\s*(.*?){padrao_fim}"
+              )
+            else:
+              p = rf"\b{label}\s*:\s*(.*?){padrao_fim}"
 
-            item = {
-                "Código Instituição": cod,
-                "Nome da Instituição": nome_escola,
-                "Município do Curso": mun_limpo,
-                "Curso": curso_limpo,
-                "Ato Regulatório": ato_reg,
-                "Situação": situacao,
-                "Modelo de Documento": modelo_doc,
-                "Nº Documento": num_doc,
-                "Validade": validade,
-                "Data de Publicação": data_pub,
-                "Pág.": pag,
-                "_Data_Fim_Ref": data_fim_ref,
-            }
-            atos_pag.append(item)
+            m = re.search(p, texto, flags=re.IGNORECASE | re.DOTALL)
+            if m:
+              lns = [
+                  l.strip()
+                  for l in m.group(1).strip().splitlines()
+                  if l.strip()
+              ]
+              return " ".join(lns)
+            return ""
+
+          curso_bruto = pegar_campo("Curso", b)
+          curso_limpo = re.sub(r"\s+", " ", curso_bruto).strip()
+
+          if not curso_limpo or curso_limpo in ["-", "--", "NÃO INFORMADO"]:
+            continue
+
+          # Filtra cursos técnicos / profissionalizantes
+          texto_curso = curso_limpo.upper()
+          if not (
+              "TECNICO" in texto_curso
+              or "TÉCNICO" in texto_curso
+              or "PROFISSIONAL" in texto_curso
+          ):
+            continue
+
+          situacao = pegar_campo("Situação", b)
+          if (
+              "NÃO AUTORIZADO" in situacao.upper()
+              or "NAO AUTORIZADO" in situacao.upper()
+          ):
+            continue
+
+          ato_reg = pegar_campo("Ato Regulatório", b)
+
+          mun_curso = pegar_campo("Município do Curso", b)
+          mun_limpo = re.sub(r"[\r\n\t]+", " ", mun_curso).strip().upper()
+          mun_limpo = re.sub(r"\s+", " ", mun_limpo)
+          if not mun_limpo or mun_limpo in ["-", "--"]:
+            mun_limpo = "SINOP" if "SINOP" in b.upper() else "NÃO INFORMADO"
+
+          validade = pegar_campo("Validade", b)
+          data_pub = pegar_campo("Data de Publicação", b)
+
+          todas_datas = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", validade)
+          if todas_datas:
+            data_fim_ref = todas_datas[-1]
+          else:
+            datas_pub = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", data_pub)
+            data_fim_ref = datas_pub[-1] if datas_pub else "01/01/1900"
+
+          modelo_doc = pegar_campo("Modelo de Documento", b) or pegar_campo(
+              "Tipo de Documento", b
+          )
+          num_doc = pegar_campo("Nº Documento", b)
+          pag = pegar_campo(r"Pág\.", b) or pegar_campo(
+              "Página da Publicação", b
+          )
+
+          item = {
+              "Código Instituição": cod,
+              "Nome da Instituição": nome_escola,
+              "Município do Curso": mun_limpo,
+              "Curso": curso_limpo,
+              "Ato Regulatório": ato_reg,
+              "Situação": situacao,
+              "Modelo de Documento": modelo_doc,
+              "Nº Documento": num_doc,
+              "Validade": validade,
+              "Data de Publicação": data_pub,
+              "Pág.": pag,
+              "_Data_Fim_Ref": data_fim_ref,
+          }
+          atos_pag.append(item)
 
         return atos_pag
 
-      # 3. Varredura garantida para página única ou múltiplas páginas
+      # 4. Varredura por página
       for num_p in range(1, total_paginas + 1):
         if num_p > 1:
           page.evaluate(f"""() => {{
@@ -221,7 +232,7 @@ with sync_playwright() as p:
 
   browser.close()
 
-# 4. Processamento Incremental Consolidado
+# 5. Processamento Incremental Consolidado
 if todos_atos:
   df_novos = pd.DataFrame(todos_atos)
   df_novos["Data_Comparacao"] = pd.to_datetime(
