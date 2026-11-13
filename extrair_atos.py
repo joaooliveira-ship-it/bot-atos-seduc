@@ -5,14 +5,14 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
-# Lista de instituições a serem consultadas
+# Instituições configuradas
 codigos = [96, 420]
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
 
 print("=" * 80)
-print("INICIANDO BOT DIÁRIO DE ATOS E CURSOS TÉCNICOS (VERSÃO COMPLETA)")
+print("INICIANDO EXTRAÇÃO CONSOLIDADA (CIPRIANI + CIENTEC)")
 print("=" * 80 + "\n")
 
 with sync_playwright() as p:
@@ -21,26 +21,17 @@ with sync_playwright() as p:
       args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
   )
   page = browser.new_page()
-  page.set_default_timeout(35000)
+  page.set_default_timeout(45000)
 
   for i, cod in enumerate(codigos, start=1):
     url = f"http://sigeduca.seduc.mt.gov.br/cee/wmceeinfinstensino.aspx?{cod}"
     print(f"[{i}/{len(codigos)}] Consultando instituição {cod}...")
 
     try:
-      page.goto(url, timeout=40000)
-      time.sleep(2)
+      page.goto(url, timeout=50000)
+      time.sleep(3)
 
-      # Clica para abrir a aba 'ATOS DA INSTITUIÇÃO'
-      botao = page.locator("input[name='BTATOSDAINSTITUICAO']")
-      if botao.count() > 0:
-        botao.click(force=True)
-        time.sleep(2)
-        if "ATO REGULATÓRIO" not in page.content().upper():
-          botao.click(force=True)
-      time.sleep(4)
-
-      # 1. Identifica Nome da Instituição
+      # 1. Identifica Nome da Instituição na página inicial
       soup_inicial = BeautifulSoup(page.content(), "html.parser")
       nome_escola = f"Instituição {cod}"
       linhas_geral = [
@@ -72,7 +63,25 @@ with sync_playwright() as p:
 
       print(f"   Nome identificado: {nome_escola}")
 
-      # 2. Identifica se existem múltiplas páginas
+      # 2. Clica para abrir a aba 'ATOS DA INSTITUIÇÃO' e aguarda com segurança
+      botao = page.locator("input[name='BTATOSDAINSTITUICAO']")
+      if botao.count() > 0:
+        botao.click(force=True)
+        time.sleep(3)
+
+      # Garante que a tabela de atos realmente carregou
+      for tentativa in range(5):
+        if "ATO REGULATÓRIO" in page.content().upper():
+          break
+        if botao.count() > 0:
+          botao.click(force=True)
+        time.sleep(3)
+
+      if "ATO REGULATÓRIO" not in page.content().upper():
+        print(f"   ✗ Não foi possível carregar a grade de atos da escola {cod}.")
+        continue
+
+      # 3. Identifica total de páginas
       total_paginas = 1
       select_pag = page.locator("select").first
       if select_pag.count() > 0:
@@ -83,7 +92,7 @@ with sync_playwright() as p:
 
       print(f"   ✓ Total de páginas identificadas: {total_paginas}")
 
-      # 3. Função para extrair os atos do HTML da página atual
+      # 4. Função de extração de cada ato
       def extrair_atos(conteudo_html):
         soup = BeautifulSoup(conteudo_html, "html.parser")
         texto_pagina = soup.get_text("\n")
@@ -112,9 +121,7 @@ with sync_playwright() as p:
             continue
 
           def pegar_campo(label, texto):
-            rotulos_sem_ele = [
-                r for r in rotulos if r.lower() != label.lower()
-            ]
+            rotulos_sem_ele = [r for r in rotulos if r.lower() != label.lower()]
             padrao_fim = (
                 r"(?=(?:\b(?:"
                 + "|".join(rotulos_sem_ele)
@@ -207,14 +214,13 @@ with sync_playwright() as p:
 
         return atos_pag
 
-      # 4. Navegação real de página por página
+      # 5. Varredura das páginas
+      atos_escola_atual = []
       for num_p in range(1, total_paginas + 1):
         if num_p > 1:
           seletor = page.locator("select").first
           if seletor.count() > 0:
-            # Seleciona a página desejada
             seletor.select_option(str(num_p))
-            # Força o postback da página
             page.evaluate("""() => {
                             const sel = document.querySelector('select');
                             if (sel) {
@@ -227,33 +233,28 @@ with sync_playwright() as p:
             time.sleep(3.5)
 
         html_atual = page.content()
-        atos_coletados = extrair_atos(html_atual)
+        atos_pag = extrair_atos(html_atual)
+        atos_escola_atual.extend(atos_pag)
 
-        amostra = (
-            atos_coletados[0]["Curso"]
-            if atos_coletados
-            else "Sem cursos nesta página"
-        )
-        print(
-            f"      Página {num_p}/{total_paginas}: {len(atos_coletados)} atos"
-            f" capturados. (Amostra: {amostra[:40]}...)"
-        )
-        todos_atos.extend(atos_coletados)
-
-      print(f"   >> Concluída coleta da instituição {cod}.\n")
+      print(
+          f"   >> Concluída instituição {cod}: {len(atos_escola_atual)} atos"
+          " técnicos encontrados no total.\n"
+      )
+      todos_atos.extend(atos_escola_atual)
 
     except Exception as e:
-      print(f"   ✗ Erro no código {cod}: {e}\n")
+      print(f"   ✗ Erro ao processar instituição {cod}: {e}\n")
 
   browser.close()
 
-# 5. Consolidação mantendo o ato mais recente de CADA curso por município
+# 6. Gravação Final Consolidada (Cipriani + CIENTEC)
 if todos_atos:
   df_novos = pd.DataFrame(todos_atos)
   df_novos["Data_Comparacao"] = pd.to_datetime(
       df_novos["_Data_Fim_Ref"], format="%d/%m/%Y", errors="coerce"
   )
 
+  # Ordena pela data mais recente
   df_consolidado = df_novos.sort_values(
       by=[
           "Código Instituição",
@@ -264,6 +265,7 @@ if todos_atos:
       ascending=[True, True, True, False],
   )
 
+  # Mantém o ato mais recente de cada curso por instituição
   df_final = df_consolidado.drop_duplicates(
       subset=["Código Instituição", "Município do Curso", "Curso"], keep="first"
   ).copy()
@@ -274,9 +276,12 @@ if todos_atos:
   )
 
   df_final.to_excel(arquivo_saida, index=False)
+  print("=" * 80)
   print(
-      f"\n✓ Sucesso! Planilha gerada com {len(df_final)} cursos técnicos únicos"
-      f" em {arquivo_saida}."
+      f"✓ SUCESSO: Planilha gerada com {len(df_final)} cursos salvos em"
+      f" '{arquivo_saida}'!"
   )
+  print(f"Instituições presentes na planilha: {df_final['Código Instituição'].unique()}")
+  print("=" * 80)
 else:
-  print("Nenhum ato técnico encontrado.")
+  print("Nenhum ato novo encontrado.")
