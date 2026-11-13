@@ -11,36 +11,37 @@ todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
 
 print("=" * 80)
-print("INICIANDO BOT DIÁRIO NA NUVEM (VERSÃO OTIMIZADA)")
+print("INICIANDO BOT DIÁRIO NA NUVEM (VERSÃO DEFINITIVA UNIVERSAL)")
 print("=" * 80 + "\n")
 
 with sync_playwright() as p:
-  # Inicia o Chromium configurado para servidores na nuvem
   browser = p.chromium.launch(
       headless=True,
       args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
   )
   page = browser.new_page()
-  page.set_default_timeout(15000)  # Evita qualquer travamento infinito
+  page.set_default_timeout(25000)
 
   for i, cod in enumerate(codigos, start=1):
     url = f"http://sigeduca.seduc.mt.gov.br/cee/wmceeinfinstensino.aspx?{cod}"
     print(f"[{i}/{len(codigos)}] Consultando instituição {cod}...")
 
     try:
-      page.goto(url, timeout=30000)
+      page.goto(url, timeout=35000)
       time.sleep(2)
 
-      # Duplo clique para carregar a aba de atos
+      # Clica no botão para abrir a grade de atos
       botao = page.locator("input[name='BTATOSDAINSTITUICAO']")
-      botao.click(force=True)
-      time.sleep(1)
-      botao.click(force=True)
+      if botao.count() > 0:
+        botao.click(force=True)
+        time.sleep(1.5)
+        if "ATO REGULATÓRIO" not in page.content().upper():
+          botao.click(force=True)
       time.sleep(4)
 
       # 1. Identifica Nome da Instituição
       soup_inicial = BeautifulSoup(page.content(), "html.parser")
-      nome_escola = "Não identificado"
+      nome_escola = f"Instituição {cod}"
       linhas_geral = [
           l.strip()
           for l in soup_inicial.get_text(separator=" \n ").splitlines()
@@ -54,23 +55,24 @@ with sync_playwright() as p:
           cands = []
           if ":" in l:
             cands.append(l.split(":", 1)[-1].strip())
-          for off in [1, 2]:
+          for off in [11-13]:
             if idx + off < len(linhas_geral):
               cands.append(linhas_geral[idx + off].strip())
           for c in cands:
             c_limpo = re.sub(r"^\d+\s*[-–]?\s*", "", c).strip()
             c_limpo = re.split(
                 r"MUNIC[ÍI]PIO", c_limpo, flags=re.IGNORECASE
-            )[0].strip()
+            ).strip()
             if c_limpo and not c_limpo.isdigit() and len(c_limpo) > 3:
               nome_escola = c_limpo
               break
-          if nome_escola != "Não identificado":
+          if nome_escola != f"Instituição {cod}":
             break
 
-      # 2. Descobre seletor de paginação
+      print(f"   Nome identificado: {nome_escola}")
+
+      # 2. Descobre se há paginação
       total_paginas = 1
-      select_id = None
       selects = page.locator("select")
       for s_idx in range(selects.count()):
         sel = selects.nth(s_idx)
@@ -78,11 +80,11 @@ with sync_playwright() as p:
         num_opts = [v.strip() for v in valores if v.strip().isdigit()]
         if len(num_opts) > 1:
           total_paginas = len(num_opts)
-          select_id = sel.get_attribute("id") or sel.get_attribute("name")
-          print(f"   ✓ Instituição possui {total_paginas} páginas de atos.")
           break
 
-      # Função de extração
+      print(f"   ✓ Total de páginas identificadas: {total_paginas}")
+
+      # Função de extração de atos da tela
       def extrair_atos_pagina_atual(conteudo_html):
         soup = BeautifulSoup(conteudo_html, "html.parser")
         elementos = soup.find_all(["table", "div"])
@@ -94,10 +96,12 @@ with sync_playwright() as p:
             "Curso",
             "Município do Curso",
             "Modelo de Documento",
+            "Tipo de Documento",
             "Nº Documento",
             "Validade",
             "Data de Publicação",
             r"Pág\.",
+            "Página da Publicação",
             "Parecer",
             "Ato",
         ]
@@ -105,9 +109,9 @@ with sync_playwright() as p:
 
         for elem in elementos:
           txt = elem.get_text(separator="\n", strip=True)
-          if (
-              "ATO REGULATÓRIO:" in txt.upper()
-              and "MODELO DE DOCUMENTO:" in txt.upper()
+          if "ATO REGULATÓRIO:" in txt.upper() and (
+              "MODELO DE DOCUMENTO:" in txt.upper()
+              or "TIPO DE DOCUMENTO:" in txt.upper()
           ):
             if (
                 "MOSTRAR ATOS:" in txt.upper()
@@ -154,7 +158,7 @@ with sync_playwright() as p:
             mun_limpo = re.sub(r"[\r\n\t]+", " ", mun_curso).strip().upper()
             mun_limpo = re.sub(r"\s+", " ", mun_limpo)
             if not mun_limpo or mun_limpo in ["-", "--"]:
-              mun_limpo = "CUIABÁ"
+              mun_limpo = "NÃO INFORMADO"
 
             validade = pegar_campo("Validade", txt)
             data_pub = pegar_campo("Data de Publicação", txt)
@@ -166,9 +170,13 @@ with sync_playwright() as p:
               datas_pub = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", data_pub)
               data_fim_ref = datas_pub[-1] if datas_pub else "01/01/1900"
 
-            modelo_doc = pegar_campo("Modelo de Documento", txt)
+            modelo_doc = pegar_campo(
+                "Modelo de Documento", txt
+            ) or pegar_campo("Tipo de Documento", txt)
             num_doc = pegar_campo("Nº Documento", txt)
-            pag = pegar_campo(r"Pág\.", txt)
+            pag = pegar_campo(r"Pág\.", txt) or pegar_campo(
+                "Página da Publicação", txt
+            )
 
             item = {
                 "Código Instituição": cod,
@@ -188,12 +196,9 @@ with sync_playwright() as p:
 
         return atos_pag
 
-      # 3. Varredura rápida página por página via JavaScript
+      # 3. Varredura garantida para página única ou múltiplas páginas
       for num_p in range(1, total_paginas + 1):
-        print(f"   -> Extraindo Página {num_p} de {total_paginas}...")
-
         if num_p > 1:
-          # Muda de página via JavaScript nativo do GeneXus sem travar o Playwright
           page.evaluate(f"""() => {{
                         const selects = Array.from(document.querySelectorAll('select'));
                         const sel = selects.find(s => Array.from(s.options).some(o => o.value == '{num_p}' || o.text == '{num_p}'));
@@ -202,21 +207,21 @@ with sync_playwright() as p:
                             sel.dispatchEvent(new Event('change', {{ bubbles: true }}));
                         }}
                     }}""")
-          time.sleep(2)
+          time.sleep(2.5)
 
         html_atual = page.content()
         atos_coletados = extrair_atos_pagina_atual(html_atual)
-        print(f"      ✓ {len(atos_coletados)} atos capturados.")
+        print(f"      Página {num_p}: {len(atos_coletados)} atos capturados.")
         todos_atos.extend(atos_coletados)
 
-      print(f"   >> Concluída coleta da instituição {cod}.")
+      print(f"   >> Concluída coleta da instituição {cod}.\n")
 
     except Exception as e:
-      print(f"   ✗ Erro no código {cod}: {e}")
+      print(f"   ✗ Erro no código {cod}: {e}\n")
 
   browser.close()
 
-# 4. Processamento Incremental (Mantém o ato mais recente de cada curso por município)
+# 4. Processamento Incremental Consolidado
 if todos_atos:
   df_novos = pd.DataFrame(todos_atos)
   df_novos["Data_Comparacao"] = pd.to_datetime(
