@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
-codigos = [96]
+codigos = [96, 120]
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
