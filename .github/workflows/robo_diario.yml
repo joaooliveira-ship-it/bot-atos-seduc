@@ -27,7 +27,9 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps chromium
 
-      - name: Executar o Robô de Extração
+     - name: Executar o Robô de Extração
+        env:
+          URL_GOOGLE_PLANILHA: ${{ secrets.URL_GOOGLE_PLANILHA }}
         run: |
           python extrair_atos.py
 
