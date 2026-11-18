@@ -5,9 +5,20 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from playwright.sync_api import sync_playwright
+import sys  # <--- ADICIONE ESTA LINHA AQUI
 
-# Instituições monitoradas (Pelegrino Cipriani + CIENTEC)
-codigos = [96, 420]
+# Instituições monitoradas (Pelegrino Cipriani + CIENTEC e demais ETECs)
+TODOS_OS_CODIGOS = [96, 420]  # Adicione aqui os códigos das outras 15 escolas quando quiser
+
+# Verifica se o GitHub Actions enviou um código específico ou pediu todas
+parametro = sys.argv[1].strip() if len(sys.argv) > 1 else "TODAS"
+
+if parametro.isdigit():
+    codigos = [int(parametro)]  # Se enviou um código numérico (ex: 96), raspa apenas ele!
+    print(f"🎯 Extração de Atos específica: código {codigos}")
+else:
+    codigos = TODOS_OS_CODIGOS  # Se for 'TODAS' ou agendamento diário, raspa todas
+    print(f"🌐 Extração de Atos completa: varrendo todas as {len(codigos)} instituições.")
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
