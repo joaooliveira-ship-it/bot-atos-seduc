@@ -7,18 +7,50 @@ import pandas as pd
 from playwright.sync_api import sync_playwright
 import sys  # <--- ADICIONE ESTA LINHA AQUI
 
-# Instituições monitoradas (Pelegrino Cipriani + CIENTEC e demais ETECs)
-TODOS_OS_CODIGOS = [96, 420]  # Adicione aqui os códigos das outras 15 escolas quando quiser
+# Mapeamento oficial das 17 ETECs (Nome -> Código SIGEDUCA)
+MAPA_ETECS = {
+    "AGUA BOA": 5002,
+    "ALTA FLORESTA": 617,
+    "BARRA DO GARCAS": 1437,
+    "CACERES": 4858,
+    "CAMPO VERDE": 2392,
+    "CUIABA": 3905,
+    "RONDONOPOLIS": 867,
+    "DIAMANTINO": 321,
+    "JUARA": 5009,
+    "LUCAS DO RIO VERDE": 3337,
+    "MATUPA": 5008,
+    "POXOREU": 1621,
+    "PRIMAVERA DO LESTE": 5003,
+    "SORRISO": 5010,
+    "TANGARA DA SERRA": 657,
+    "VARZEA GRANDE": 5107,
+    "SINOP": 656
+}
 
-# Verifica se o GitHub Actions enviou um código específico ou pediu todas
+# Lista completa com os códigos das 17 escolas monitoradas
+TODOS_OS_CODIGOS = list(MAPA_ETECS.values())
+
+# Verifica se o GitHub Actions enviou um parâmetro
 parametro = sys.argv[1].strip() if len(sys.argv) > 1 else "TODAS"
 
 if parametro.isdigit():
-    codigos = [int(parametro)]  # Se enviou um código numérico (ex: 96), raspa apenas ele!
-    print(f"🎯 Extração de Atos específica: código {codigos}")
+    codigos = [int(parametro)]  # Se enviou direto o código numérico (ex: 96 ou 100)
+    print(f"🎯 Extração específica por código: {codigos}")
+elif parametro.upper() != "TODAS" and parametro:
+    # Se enviou o nome da cidade (ex: "Matupá" ou "Sinop")
+    nome_limpo = parametro.upper().replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Ú", "U").replace("Ç", "C")
+    cod_encontrado = None
+    for nome, cod in MAPA_ETECS.items():
+        nome_normal = nome.replace("Ç", "C")
+        if nome_normal in nome_limpo or nome_limpo in nome_normal:
+            cod_encontrado = cod
+            break
+    codigos = [cod_encontrado] if cod_encontrado else TODOS_OS_CODIGOS
+    print(f"🎯 Extração específica por nome ('{parametro}'): {codigos}")
 else:
-    codigos = TODOS_OS_CODIGOS  # Se for 'TODAS' ou agendamento diário, raspa todas
-    print(f"🌐 Extração de Atos completa: varrendo todas as {len(codigos)} instituições.")
+    codigos = TODOS_OS_CODIGOS  # Se for 'TODAS' ou agendamento diário, raspa todas as 17
+    print(f"🌐 Extração completa: varrendo todas as {len(codigos)} instituições.")
 
 todos_atos = []
 arquivo_saida = "Atos_Instituicoes_MatoGrosso.xlsx"
@@ -134,7 +166,12 @@ with sync_playwright() as p:
                         mun_limpo = re.sub(r'[\r\n\t]+', ' ', mun_curso).strip().upper()
                         mun_limpo = re.sub(r'\s+', ' ', mun_limpo)
                         if not mun_limpo or mun_limpo in ["-", "--"]:
-                            mun_limpo = "CUIABÁ" if cod == 96 else "SINOP"
+                            # Descobre o nome da cidade direto pelo código que está sendo rodado
+                            mun_limpo = "MATO GROSSO"
+                            for nome_etec, codigo_etec in MAPA_ETECS.items():
+                                if codigo_etec == cod:
+                                    mun_limpo = nome_etec
+                                    break
 
                         validade = pegar_campo("Validade", txt)
                         data_pub = pegar_campo("Data de Publicação", txt)
