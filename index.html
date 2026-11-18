@@ -871,11 +871,10 @@
           <span id="data-source-badge">FONTE: <strong>BASE REFERENCIAL SIGEDUCA/SIPE</strong></span>
         </div>
         <div class="header-btn-row">
-          <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha Google">
+          <button type="button" class="btn btn-header-brass" onclick="forcarSincronizacaoPlanilha()" style="background:#b08d57;color:#fff;border-color:#b08d57;">
             <i data-lucide="refresh-cw" aria-hidden="true" style="width:16px;height:16px;"></i>
             Sincronizar Planilha
           </button>
-          
           <button type="button" class="btn btn-header-outline" onclick="toggleImportDrawer()">
             <i data-lucide="upload" aria-hidden="true" style="width:16px;height:16px;"></i>
             Importar Dados SIGEDUCA
@@ -1312,6 +1311,225 @@
   <api-shim></api-shim>
 
   <script>
+
+    // =========================================================================
+    // CONEXÃO COM A PLANILHA GOOGLE (DADOS AO VIVO EM TEMPO REAL)
+    // =========================================================================
+    const URL_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9-yb5ewD5LobCyj82S4yLTtUINPWk9bx8HngF4flfJ3xT4tQhrkRm4_wM4M8EGFhQkedrfLLqMvI3/pub?gid=0&single=true&output=csv";
+
+    function parseCSVLine(text) {
+      if (!text) return [];
+      let sep = ',';
+      if (!text.includes(',') && text.includes(';')) sep = ';';
+      if (!text.includes(',') && !text.includes(';') && text.includes('\t')) sep = '\t';
+
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (c === '"') {
+          inQuotes = !inQuotes;
+        } else if (c === sep && !inQuotes) {
+          result.push(cur.trim());
+          cur = '';
+        } else {
+          cur += c;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+
+    function normalizeStr(text) {
+      return String(text || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .trim();
+    }
+
+    function limparNomeCurso(str) {
+      if (!str) return 'CURSO TÉCNICO';
+      let limpo = str.replace(/["']/g, '').trim();
+      if (limpo.includes('-')) {
+        const partes = limpo.split('-');
+        limpo = partes[partes.length - 1];
+      } else if (limpo.includes('>')) {
+        const partes = limpo.split('>');
+        limpo = partes[partes.length - 1];
+      }
+      return limpo.replace(/["']/g, '').trim().toUpperCase();
+    }
+
+    async function carregarDadosPlanilhaOnline() {
+      if (!URL_PLANILHA_CSV || URL_PLANILHA_CSV.trim() === '') return false;
+
+      try {
+        console.log('⏳ SIPE Flow: Buscando atos da planilha Google online...');
+        const resp = await fetch(URL_PLANILHA_CSV, { cache: 'no-store' });
+        if (!resp.ok) {
+          console.warn('⚠️ Google Sheets retornou status:', resp.status);
+          return false;
+        }
+        const csvText = await resp.text();
+        const rawLines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+        if (rawLines.length === 0) return false;
+
+        // Análise de colunas
+        const firstRow = parseCSVLine(rawLines[0]);
+        const headerNorm = firstRow.map(h => normalizeStr(h));
+        
+        // Verifica se a primeira linha é cabeçalho
+        const isHeader = headerNorm.some(h => 
+          h.includes('COD') || h.includes('CURSO') || h.includes('ESCOLA') || 
+          h.includes('INSTITU') || h.includes('MUNICIPIO') || h.includes('VALIDADE')
+        );
+
+        const startIdx = isHeader ? 1 : 0;
+        let novosAtos = [];
+
+        // CASO 1: Formato padrão de 11 colunas do robô EXTRAIR_ATOS
+        if (firstRow.length >= 6) {
+          let idxCod = headerNorm.findIndex(h => h.includes('CODIGO') || h.includes('COD'));
+          let idxEscola = headerNorm.findIndex(h => h.includes('NOME DA INSTITUICAO') || h.includes('ESCOLA'));
+          let idxMun = headerNorm.findIndex(h => h.includes('MUNICIPIO'));
+          let idxCurso = headerNorm.findIndex(h => h === 'CURSO' || h.includes('CURSO'));
+          let idxAto = headerNorm.findIndex(h => h.includes('ATO'));
+          let idxSit = headerNorm.findIndex(h => h.includes('SITUACAO'));
+          let idxModelo = headerNorm.findIndex(h => h.includes('MODELO'));
+          let idxDoc = headerNorm.findIndex(h => h.includes('DOCUMENTO') || h.includes('DOC') || h.includes('NUMERO'));
+          let idxVal = headerNorm.findIndex(h => h.includes('VALIDADE'));
+          let idxPub = headerNorm.findIndex(h => h.includes('PUBLICACAO'));
+          let idxPag = headerNorm.findIndex(h => h.includes('PAG'));
+
+          if (idxCod === -1) idxCod = 0;
+          if (idxEscola === -1) idxEscola = 1;
+          if (idxMun === -1) idxMun = 2;
+          if (idxCurso === -1) idxCurso = 3;
+          if (idxAto === -1) idxAto = 4;
+          if (idxSit === -1) idxSit = 5;
+          if (idxModelo === -1) idxModelo = 6;
+          if (idxDoc === -1) idxDoc = 7;
+          if (idxVal === -1) idxVal = 8;
+          if (idxPub === -1) idxPub = 9;
+          if (idxPag === -1) idxPag = 10;
+
+          for (let i = startIdx; i < rawLines.length; i++) {
+            const col = parseCSVLine(rawLines[i]);
+            if (col.length < 2) continue;
+
+            const cursoBruto = col[idxCurso] || '';
+            if (!cursoBruto) continue;
+
+            let cod = parseInt(col[idxCod], 10) || 0;
+            let mun = (col[idxMun] || '').replace(/["']/g, '').trim().toUpperCase();
+            let escola = (col[idxEscola] || '').replace(/["']/g, '').trim();
+
+            if (typeof ETECS_MASTER !== 'undefined') {
+              let etec = null;
+              if (cod > 0) etec = ETECS_MASTER.find(e => e.cod === cod);
+              if (!etec && mun) {
+                const mNorm = normalizeStr(mun);
+                etec = ETECS_MASTER.find(e => normalizeStr(e.key) === mNorm || normalizeStr(e.cidade) === mNorm || mNorm.includes(normalizeStr(e.key)));
+              }
+              if (!etec && escola) {
+                const eNorm = normalizeStr(escola);
+                etec = ETECS_MASTER.find(e => eNorm.includes(normalizeStr(e.key)));
+              }
+              if (etec) {
+                cod = etec.cod;
+                if (!mun) mun = etec.cidade;
+                if (!escola) escola = etec.nomeCompleto;
+              }
+            }
+
+            if (cod === 0) cod = 5002;
+
+            novosAtos.push({
+              cod: cod,
+              escola: escola || ('ESCOLA TÉCNICA ESTADUAL (' + mun + ')'),
+              municipio: mun || 'MATO GROSSO',
+              curso: limparNomeCurso(cursoBruto),
+              ato: (col[idxAto] || 'AUTORIZAÇÃO').replace(/["']/g, '').trim(),
+              situacao: (col[idxSit] || 'REGULAR').replace(/["']/g, '').trim(),
+              modelo: (col[idxModelo] || 'Portaria / Resolução').replace(/["']/g, '').trim(),
+              doc: (col[idxDoc] || 'Ato CEE/MT').replace(/["']/g, '').trim(),
+              validade: (col[idxVal] || '').replace(/["']/g, '').trim(),
+              pub: (col[idxPub] || '—').replace(/["']/g, '').trim(),
+              pag: (col[idxPag] || '—').replace(/["']/g, '').trim()
+            });
+          }
+        } 
+        // CASO 2: Formato resumido (2 a 5 colunas, ex: Curso e Validade)
+        else {
+          for (let i = startIdx; i < rawLines.length; i++) {
+            const col = parseCSVLine(rawLines[i]);
+            if (col.length < 2) continue;
+
+            let cText = col[0];
+            let vText = col[1];
+
+            // Inverte se a validade estiver na primeira coluna
+            if (cText && cText.includes('/') && cText.includes(' a ')) {
+              const tmp = cText; cText = vText; vText = tmp;
+            }
+
+            if (!cText) continue;
+
+            novosAtos.push({
+              cod: 5002, // Padrão ETEC Água Boa
+              escola: 'ESCOLA TECNICA ESTADUAL DE AGUA BOA',
+              municipio: 'ÁGUA BOA',
+              curso: limparNomeCurso(cText),
+              ato: 'AUTORIZAÇÃO',
+              situacao: 'REGULAR',
+              modelo: 'Portaria / Resolução',
+              doc: 'Ato CEE/MT',
+              validade: vText || '',
+              pub: '—',
+              pag: '—'
+            });
+          }
+        }
+
+        if (novosAtos.length > 0) {
+          console.log('✅ SIPE Flow: ' + novosAtos.length + ' atos obtidos da planilha Google!');
+          
+          // Se for uma lista focada (ex: apenas cursos de Água Boa), preserva as outras ETECs
+          if (novosAtos.length <= 15 && novosAtos.every(a => a.cod === 5002)) {
+            const outrasEscolas = buildBaselineAtos().filter(a => a.cod !== 5002);
+            appState.atos = novosAtos.concat(outrasEscolas);
+            appState.customSourceLabel = 'PLANILHA GOOGLE (ÁGUA BOA ATUALIZADA + 16 ETECs)';
+          } else {
+            appState.atos = novosAtos;
+            appState.customSourceLabel = 'PLANILHA GOOGLE (' + novosAtos.length + ' CURSOS)';
+          }
+          return true;
+        }
+      } catch (err) {
+        console.error('❌ Erro na sincronização online com Google Sheets:', err);
+      }
+      return false;
+    }
+
+    async function forcarSincronizacaoPlanilha() {
+      const badge = document.getElementById('data-source-badge');
+      if (badge) badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
+      const ok = await carregarDadosPlanilhaOnline();
+      if (ok) {
+        renderAll();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+        alert('Planilha do Google Sheets sincronizada com sucesso!\n' + appState.atos.length + ' cursos regulatórios ativos no painel.');
+      } else {
+        if (badge) badge.innerHTML = `FONTE: <strong>${escapeHtml(appState.customSourceLabel)}</strong>`;
+        alert('Não foi possível atualizar a planilha online no momento. O painel continua operando com os dados da base referencial.');
+      }
+    }
+
+
     // =========================================================================
     // 1. REFERENCE DATE & OFFICIAL 17 ETECs DIRECTORY (FROM MAPA_ETECS)
     // =========================================================================
@@ -1380,173 +1598,6 @@
     // =========================================================================
     // 2. BASELINE OPERATIONAL DATASET (SIGEDUCA 11-COL ATOS + SIPE 9-COL PROC)
     // =========================================================================
-    
-    // =========================================================================
-    // CONEXÃO COM A PLANILHA GOOGLE (DADOS AO VIVO EM TEMPO REAL)
-    // =========================================================================
-    const URL_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9-yb5ewD5LobCyj82S4yLTtUINPWk9bx8HngF4flfJ3xT4tQhrkRm4_wM4M8EGFhQkedrfLLqMvI3/pub?gid=0&single=true&output=csv";
-
-    function parseCSVLine(text) {
-      const result = [];
-      let cur = '';
-      let inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const c = text[i];
-        if (c === '"') {
-          inQuotes = !inQuotes;
-        } else if (c === ',' && !inQuotes) {
-          result.push(cur.trim());
-          cur = '';
-        } else {
-          cur += c;
-        }
-      }
-      result.push(cur.trim());
-      return result;
-    }
-
-    function normalizeStr(text) {
-      return String(text || '')
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .toUpperCase()
-        .trim();
-    }
-
-    function limparNomeCurso(str) {
-      if (!str) return 'CURSO TÉCNICO';
-      let limpo = str.replace(/["']/g, '').trim();
-      if (limpo.includes('-')) {
-        const partes = limpo.split('-');
-        limpo = partes[partes.length - 1];
-      } else if (limpo.includes('>')) {
-        const partes = limpo.split('>');
-        limpo = partes[partes.length - 1];
-      }
-      return limpo.replace(/["']/g, '').trim().toUpperCase();
-    }
-
-    async function carregarDadosPlanilhaOnline() {
-      if (!URL_PLANILHA_CSV || URL_PLANILHA_CSV.trim() === '') return false;
-
-      try {
-        console.log('⏳ SIPE Flow: Buscando atos da planilha Google online...');
-        const resp = await fetch(URL_PLANILHA_CSV, { cache: 'no-store' });
-        if (!resp.ok) {
-          console.warn('⚠️ Google Sheets retornou status:', resp.status);
-          return false;
-        }
-        const csvText = await resp.text();
-        const rawLines = csvText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        if (rawLines.length < 2) return false;
-
-        // Detectar colunas pelo cabeçalho da planilha
-        const header = parseCSVLine(rawLines[0]).map(h => normalizeStr(h));
-        
-        let idxCod = header.findIndex(h => h.includes('CODIGO') || h.includes('COD'));
-        let idxEscola = header.findIndex(h => h.includes('NOME DA INSTITUICAO') || h.includes('ESCOLA'));
-        let idxMun = header.findIndex(h => h.includes('MUNICIPIO'));
-        let idxCurso = header.findIndex(h => h === 'CURSO' || h.includes('CURSO'));
-        let idxAto = header.findIndex(h => h.includes('ATO'));
-        let idxSit = header.findIndex(h => h.includes('SITUACAO'));
-        let idxModelo = header.findIndex(h => h.includes('MODELO'));
-        let idxDoc = header.findIndex(h => h.includes('DOCUMENTO') || h.includes('DOC') || h.includes('NUMERO'));
-        let idxVal = header.findIndex(h => h.includes('VALIDADE'));
-        let idxPub = header.findIndex(h => h.includes('PUBLICACAO'));
-        let idxPag = header.findIndex(h => h.includes('PAG'));
-
-        // Fallbacks baseados na estrutura oficial de 11 colunas do robô
-        if (idxCod === -1) idxCod = 0;
-        if (idxEscola === -1) idxEscola = 1;
-        if (idxMun === -1) idxMun = 2;
-        if (idxCurso === -1) idxCurso = 3;
-        if (idxAto === -1) idxAto = 4;
-        if (idxSit === -1) idxSit = 5;
-        if (idxModelo === -1) idxModelo = 6;
-        if (idxDoc === -1) idxDoc = 7;
-        if (idxVal === -1) idxVal = 8;
-        if (idxPub === -1) idxPub = 9;
-        if (idxPag === -1) idxPag = 10;
-
-        const novosAtos = [];
-
-        for (let i = 1; i < rawLines.length; i++) {
-          const col = parseCSVLine(rawLines[i]);
-          if (col.length < 2) continue;
-
-          const cursoBruto = col[idxCurso] || '';
-          if (!cursoBruto) continue;
-
-          let cod = parseInt(col[idxCod], 10) || 0;
-          let mun = (col[idxMun] || '').replace(/["']/g, '').trim().toUpperCase();
-          let escola = (col[idxEscola] || '').replace(/["']/g, '').trim();
-
-          // Mapeamento inteligente para a ETEC correspondente em Mato Grosso
-          if (typeof ETECS_MASTER !== 'undefined') {
-            let etec = null;
-            if (cod > 0) {
-              etec = ETECS_MASTER.find(e => e.cod === cod);
-            }
-            if (!etec && mun) {
-              const mNorm = normalizeStr(mun);
-              etec = ETECS_MASTER.find(e => normalizeStr(e.key) === mNorm || normalizeStr(e.cidade) === mNorm || mNorm.includes(normalizeStr(e.key)));
-            }
-            if (!etec && escola) {
-              const eNorm = normalizeStr(escola);
-              etec = ETECS_MASTER.find(e => eNorm.includes(normalizeStr(e.key)));
-            }
-            if (etec) {
-              cod = etec.cod;
-              if (!mun) mun = etec.cidade;
-              if (!escola) escola = etec.nomeCompleto;
-            }
-          }
-
-          if (cod === 0) cod = 5002;
-
-          novosAtos.push({
-            cod: cod,
-            escola: escola || ('ESCOLA TÉCNICA ESTADUAL (' + mun + ')'),
-            municipio: mun || 'MATO GROSSO',
-            curso: limparNomeCurso(cursoBruto),
-            ato: (col[idxAto] || 'AUTORIZAÇÃO').replace(/["']/g, '').trim(),
-            situacao: (col[idxSit] || 'REGULAR').replace(/["']/g, '').trim(),
-            modelo: (col[idxModelo] || 'Portaria / Resolução').replace(/["']/g, '').trim(),
-            doc: (col[idxDoc] || 'Ato CEE/MT').replace(/["']/g, '').trim(),
-            validade: (col[idxVal] || '').replace(/["']/g, '').trim(),
-            pub: (col[idxPub] || '—').replace(/["']/g, '').trim(),
-            pag: (col[idxPag] || '—').replace(/["']/g, '').trim()
-          });
-        }
-
-        if (novosAtos.length > 0) {
-          console.log('✅ SIPE Flow: ' + novosAtos.length + ' atos carregados com sucesso do Google Sheets!');
-          appState.atos = novosAtos;
-          appState.customSourceLabel = 'PLANILHA ONLINE GOOGLE (' + novosAtos.length + ' CURSOS)';
-          return true;
-        }
-      } catch (err) {
-        console.error('❌ Erro na sincronização online com Google Sheets:', err);
-      }
-      return false;
-    }
-
-    async function forcarSincronizacaoPlanilha() {
-      const badge = document.getElementById('data-source-badge');
-      if (badge) badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
-      const ok = await carregarDadosPlanilhaOnline();
-      if (ok) {
-        renderAll();
-        if (window.lucide && typeof window.lucide.createIcons === 'function') {
-          window.lucide.createIcons();
-        }
-        alert('✅ Sincronização concluída com sucesso!\n' + appState.atos.length + ' cursos regulatórios carregados diretamente da Planilha Google.');
-      } else {
-        alert('⚠️ Não foi possível sincronizar com a planilha online no momento. Mantendo base referencial.');
-        renderAll();
-      }
-    }
-
     function buildBaselineAtos() {
       const rows = [
         // Rondonópolis (867) - includes exact test case Portaria 123/2024 (expired 09/11/2026)
@@ -3083,23 +3134,21 @@
     // =========================================================================
     async function initApp() {
       await loadSavedState();
+      // Render baseline immediately so the user never sees 0 or a blank map
       populateEtecDropdown();
       syncFilterControlsFromState();
-
-      // Render baseline immediately so map, indicators and KPIs never blank or zero out!
       renderAll();
 
-      // Sincroniza em segundo plano com o Google Sheets sem travar o carregamento inicial
-      carregarDadosPlanilhaOnline().then(ok => {
-        if (ok) {
+      // In background, fetch the Google Sheet and update seamlessly
+      carregarDadosPlanilhaOnline().then(updated => {
+        if (updated) {
           populateEtecDropdown();
           syncFilterControlsFromState();
           renderAll();
-          if (window.lucide && typeof window.lucide.createIcons === 'function') {
-            window.lucide.createIcons();
-          }
         }
       });
+      populateEtecDropdown();
+      syncFilterControlsFromState();
 
       // Sync active tabs from restored state
       const crossBtn = document.querySelector(`[data-cross-tab="${appState.crossTab}"]`);
