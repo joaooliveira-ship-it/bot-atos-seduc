@@ -1307,6 +1307,73 @@
   <api-shim></api-shim>
 
   <script>
+
+    // =========================================================================
+// CONEXÃO COM A PLANILHA GOOGLE (DADOS REAIS EM TEMPO REAL)
+// =========================================================================
+// Cole aqui o link CSV publicado da sua aba de Atos:
+const URL_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9-yb5ewD5LobCyj82S4yLTtUINPWk9bx8HngF4flfJ3xT4tQhrkRm4_wM4M8EGFhQkedrfLLqMvI3/pub?gid=0&single=true&output=csv";
+
+async function carregarDadosPlanilha() {
+  if (!URL_PLANILHA_CSV || URL_PLANILHA_CSV.includes("COLE_AQUI")) {
+    console.log("Modo demonstração: usando dados locais de demonstração.");
+    return;
+  }
+
+  try {
+    const resposta = await fetch(URL_PLANILHA_CSV);
+    const textoCSV = await resposta.text();
+    
+    // Divide em linhas e colunas
+    const linhas = textoCSV.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    if (linhas.length < 2) return;
+
+    // Converte as linhas do CSV para o formato da tabela do painel
+    // Esperado: Instituição / Município, Curso, Validade / Período, etc.
+    const novosCursos = [];
+    
+    // Pula o cabeçalho (i = 1)
+    for (let i = 1; i < linhas.length; i++) {
+      // Divide considerando vírgulas ou ponto-e-vírgula
+      const colunas = linhas[i].split(/[,;]/);
+      if (colunas.length >= 2) {
+        novosCursos.push({
+          municipio: (colunas[0] || "").replace(/"/g, '').trim(),
+          curso: (colunas[1] || "").replace(/"/g, '').trim(),
+          ato: (colunas[2] || "AUTORIZAÇÃO").replace(/"/g, '').trim(),
+          documento: (colunas[3] || "Portaria / Resolução").replace(/"/g, '').trim(),
+          validade: (colunas[4] || colunas[2] || "").replace(/"/g, '').trim(),
+          status: "Vigente"
+        });
+      }
+    }
+
+    console.log("✅ Cursos reais carregados da planilha:", novosCursos.length);
+
+    // Se existir a lista global de cursos no script, atualiza ela:
+    if (typeof cursosData !== "undefined") {
+      cursosData = novosCursos;
+    } else if (typeof DATA !== "undefined" && DATA.cursos) {
+      DATA.cursos = novosCursos;
+    }
+
+    // Se existir função de renderizar/atualizar tabela, chama ela:
+    if (typeof renderizarTabela === "function") renderizarTabela();
+    if (typeof atualizarDashboard === "function") atualizarDashboard();
+    if (typeof updateStats === "function") updateStats();
+
+  } catch (erro) {
+    console.error("❌ Erro ao buscar dados da planilha:", erro);
+  }
+}
+
+// Executa ao carregar a página
+window.addEventListener("DOMContentLoaded", carregarDadosPlanilha);
+
+// =========================================================================
+// 1. REFERENCE DATE & OFFICIAL 17 ETECs DIRECTORY (FROM MAPA_ETECS)
+// =========================================================================
+const REFERENCE_DATE = new Date(2026, 10, 18); // 18/11/2026
     // =========================================================================
     // 1. REFERENCE DATE & OFFICIAL 17 ETECs DIRECTORY (FROM MAPA_ETECS)
     // =========================================================================
