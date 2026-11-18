@@ -1437,8 +1437,7 @@
           return false;
         }
         const csvText = await resp.text();
-        const rawLines = csvText.split('
-').map(l => l.trim()).filter(l => l.length > 0);
+        const rawLines = csvText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (rawLines.length < 2) return false;
 
         // Detectar colunas pelo cabeçalho da planilha
@@ -3084,9 +3083,23 @@
     // =========================================================================
     async function initApp() {
       await loadSavedState();
-      await carregarDadosPlanilhaOnline();
       populateEtecDropdown();
       syncFilterControlsFromState();
+
+      // Render baseline immediately so map, indicators and KPIs never blank or zero out!
+      renderAll();
+
+      // Sincroniza em segundo plano com o Google Sheets sem travar o carregamento inicial
+      carregarDadosPlanilhaOnline().then(ok => {
+        if (ok) {
+          populateEtecDropdown();
+          syncFilterControlsFromState();
+          renderAll();
+          if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+          }
+        }
+      });
 
       // Sync active tabs from restored state
       const crossBtn = document.querySelector(`[data-cross-tab="${appState.crossTab}"]`);
