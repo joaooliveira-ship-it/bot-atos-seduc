@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 10 * * 1-5'
   workflow_dispatch:
+    inputs:
+      escola:
+        description: 'Código da ETEC para extrair (ou TODAS)'
+        required: false
+        default: 'TODAS'
 
 jobs:
   executar-robo:
@@ -28,7 +33,7 @@ jobs:
         env:
           URL_GOOGLE_PLANILHA: ${{ secrets.URL_GOOGLE_PLANILHA }}
         run: |
-          python extrair_atos.py
+          python extrair_atos.py "${{ github.event.inputs.escola }}"
 
       - name: Salvar planilha atualizada no GitHub
         run: |
