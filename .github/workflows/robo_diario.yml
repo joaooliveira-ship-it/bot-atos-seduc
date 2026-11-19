@@ -1,4 +1,4 @@
-name: Rotina Diaria - Extracao de Processos
+name: Rotina Diaria - Extracao de Atos
 
 on:
   schedule:
@@ -10,7 +10,7 @@ on:
         required: false
         default: 'TODAS'
 
-# Permissão para o bot salvar a planilha atualizada no GitHub
+# Permissão para o bot salvar a planilha no repositório
 permissions:
   contents: write
 
@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # CACHE DO CHROMIUM: Reutiliza o navegador em 3s em vez de baixar 300MB
+      # CACHE DO CHROMIUM: Reutiliza o navegador em segundos em vez de baixar 300MB toda vez
       - name: Cache dos binarios do Playwright
         uses: actions/cache@v4
         id: playwright-cache
@@ -45,11 +45,11 @@ jobs:
         env:
           URL_GOOGLE_PLANILHA: ${{ secrets.URL_GOOGLE_PLANILHA }}
         run: |
-          python extrair_processos.py "${{ github.event.inputs.escola }}"
+          python extrair_atos.py "${{ github.event.inputs.escola }}"
 
       - name: Salvar planilha atualizada no GitHub
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add Processos_Instituicoes_MatoGrosso.xlsx
+          git add Atos_Instituicoes_MatoGrosso.xlsx
           git diff --staged --quiet || (git commit -m "Auto: Planilha atualizada [skip ci]" && git push)
