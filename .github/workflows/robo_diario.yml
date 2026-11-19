@@ -10,6 +10,10 @@ on:
         required: false
         default: 'TODAS'
 
+# PERMISSÃO ADICIONADA: Libera o bot para salvar o arquivo no GitHub
+permissions:
+  contents: write
+
 jobs:
   executar-robo:
     runs-on: ubuntu-latest
