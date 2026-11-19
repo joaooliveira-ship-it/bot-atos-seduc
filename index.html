@@ -1385,7 +1385,6 @@
     // CONEXÃO COM A PLANILHA GOOGLE (DADOS AO VIVO EM TEMPO REAL)
     // =========================================================================
     const URL_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9-yb5ewD5LobCyj82S4yLTtUINPWk9bx8HngF4flfJ3xT4tQhrkRm4_wM4M8EGFhQkedrfLLqMvI3/pub?gid=0&single=true&output=csv";
-    const URL_PLANILHA_PROCESSOS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTsP6XBz8M3xroIJIrQesLCfo-IeQgsgcBqurR7_6hGv-cGSIZEbsTVi54N79xaKNOVGYXGq2SHxwe5/pub?gid=0&single=true&output=csv";
 
     function parseCSVLine(text) {
       const result = [];
@@ -1409,7 +1408,7 @@
     function normalizeStr(text) {
       return String(text || '')
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .toUpperCase()
         .trim();
     }
@@ -1428,205 +1427,106 @@
     }
 
     async function carregarDadosPlanilhaOnline() {
-      let atosCarregados = false;
-      let processosCarregados = false;
+      if (!URL_PLANILHA_CSV || URL_PLANILHA_CSV.trim() === '') return false;
 
-      // -----------------------------------------------------------------------
-      // 1. CARREGAR ATOS REGULATÓRIOS (ABA ATOS)
-      // -----------------------------------------------------------------------
-      if (URL_PLANILHA_CSV && URL_PLANILHA_CSV.trim() !== '') {
-        try {
-          console.log('⏳ SIPE Flow: Buscando atos da planilha Google online...');
-          const resp = await fetch(URL_PLANILHA_CSV, { cache: 'no-store' });
-          if (resp.ok) {
-            const csvText = await resp.text();
-            const rawLines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-            if (rawLines.length >= 2) {
-              const header = parseCSVLine(rawLines[0]).map(h => normalizeStr(h));
-              
-              let idxCod = header.findIndex(h => h.includes('CODIGO') || h.includes('COD'));
-              let idxEscola = header.findIndex(h => h.includes('NOME DA INSTITUICAO') || h.includes('ESCOLA'));
-              let idxMun = header.findIndex(h => h.includes('MUNICIPIO') || h.includes('CIDADE'));
-              
-              // ATENÇÃO: Busca exata de 'CURSO' primeiro para NÃO pegar 'MUNICÍPIO DO CURSO' (coluna 2)
-              let idxCurso = header.findIndex(h => h === 'CURSO');
-              if (idxCurso === -1) {
-                idxCurso = header.findIndex(h => h.includes('CURSO') && !h.includes('MUNICIPIO'));
-              }
-              
-              let idxAto = header.findIndex(h => h.includes('ATO'));
-              let idxSit = header.findIndex(h => h.includes('SITUACAO'));
-              let idxModelo = header.findIndex(h => h.includes('MODELO'));
-              let idxDoc = header.findIndex(h => (h.includes('DOCUMENTO') || h.includes('DOC') || h.includes('NUMERO')) && !h.includes('MODELO'));
-              let idxVal = header.findIndex(h => h.includes('VALIDADE') || h.includes('VIGENCIA'));
-              let idxPub = header.findIndex(h => h.includes('PUBLICACAO'));
-              let idxPag = header.findIndex(h => h.includes('PAG'));
+      try {
+        console.log('⏳ SIPE Flow: Buscando atos da planilha Google online...');
+        const resp = await fetch(URL_PLANILHA_CSV, { cache: 'no-store' });
+        if (!resp.ok) {
+          console.warn('⚠️ Google Sheets retornou status:', resp.status);
+          return false;
+        }
+        const csvText = await resp.text();
+        const rawLines = csvText.split(String.fromCharCode(10)).map(l => l.trim()).filter(l => l.length > 0);
+        if (rawLines.length < 2) return false;
 
-              // Fallbacks baseados na estrutura oficial de 11 colunas do robô SIGEDUCA
-              if (idxCod === -1) idxCod = 0;
-              if (idxEscola === -1) idxEscola = 1;
-              if (idxMun === -1) idxMun = 2;
-              if (idxCurso === -1) idxCurso = 3;
-              if (idxAto === -1) idxAto = 4;
-              if (idxSit === -1) idxSit = 5;
-              if (idxModelo === -1) idxModelo = 6;
-              if (idxDoc === -1) idxDoc = 7;
-              if (idxVal === -1) idxVal = 8;
-              if (idxPub === -1) idxPub = 9;
-              if (idxPag === -1) idxPag = 10;
+        // Detectar colunas pelo cabeçalho da planilha
+        const header = parseCSVLine(rawLines[0]).map(h => normalizeStr(h));
+        
+        let idxCod = header.findIndex(h => h.includes('CODIGO') || h.includes('COD'));
+        let idxEscola = header.findIndex(h => h.includes('NOME DA INSTITUICAO') || h.includes('ESCOLA'));
+        let idxMun = header.findIndex(h => h.includes('MUNICIPIO'));
+        let idxCurso = header.findIndex(h => h === 'CURSO' || h.includes('CURSO'));
+        let idxAto = header.findIndex(h => h.includes('ATO'));
+        let idxSit = header.findIndex(h => h.includes('SITUACAO'));
+        let idxModelo = header.findIndex(h => h.includes('MODELO'));
+        let idxDoc = header.findIndex(h => h.includes('DOCUMENTO') || h.includes('DOC') || h.includes('NUMERO'));
+        let idxVal = header.findIndex(h => h.includes('VALIDADE'));
+        let idxPub = header.findIndex(h => h.includes('PUBLICACAO'));
+        let idxPag = header.findIndex(h => h.includes('PAG'));
 
-              const novosAtos = [];
+        // Fallbacks baseados na estrutura oficial de 11 colunas do robô
+        if (idxCod === -1) idxCod = 0;
+        if (idxEscola === -1) idxEscola = 1;
+        if (idxMun === -1) idxMun = 2;
+        if (idxCurso === -1) idxCurso = 3;
+        if (idxAto === -1) idxAto = 4;
+        if (idxSit === -1) idxSit = 5;
+        if (idxModelo === -1) idxModelo = 6;
+        if (idxDoc === -1) idxDoc = 7;
+        if (idxVal === -1) idxVal = 8;
+        if (idxPub === -1) idxPub = 9;
+        if (idxPag === -1) idxPag = 10;
 
-              for (let i = 1; i < rawLines.length; i++) {
-                const col = parseCSVLine(rawLines[i]);
-                if (col.length < 2) continue;
+        const novosAtos = [];
 
-                const cursoBruto = col[idxCurso] || '';
-                if (!cursoBruto) continue;
+        for (let i = 1; i < rawLines.length; i++) {
+          const col = parseCSVLine(rawLines[i]);
+          if (col.length < 2) continue;
 
-                let cod = parseInt(col[idxCod], 10) || 0;
-                let mun = (col[idxMun] || '').replace(/["']/g, '').trim().toUpperCase();
-                let escola = (col[idxEscola] || '').replace(/["']/g, '').trim();
+          const cursoBruto = col[idxCurso] || '';
+          if (!cursoBruto) continue;
 
-                // Mapeamento inteligente para a ETEC correspondente em Mato Grosso
-                if (typeof ETECS_MASTER !== 'undefined') {
-                  let etec = null;
-                  if (cod > 0) {
-                    etec = ETECS_MASTER.find(e => e.cod === cod);
-                  }
-                  if (!etec && mun) {
-                    const mNorm = normalizeStr(mun);
-                    etec = ETECS_MASTER.find(e => normalizeStr(e.key) === mNorm || normalizeStr(e.cidade) === mNorm || mNorm.includes(normalizeStr(e.key)));
-                  }
-                  if (!etec && escola) {
-                    const eNorm = normalizeStr(escola);
-                    etec = ETECS_MASTER.find(e => eNorm.includes(normalizeStr(e.key)));
-                  }
-                  if (etec) {
-                    cod = etec.cod;
-                    if (!mun) mun = etec.cidade;
-                    if (!escola) escola = etec.nomeCompleto;
-                  }
-                }
+          let cod = parseInt(col[idxCod], 10) || 0;
+          let mun = (col[idxMun] || '').replace(/["']/g, '').trim().toUpperCase();
+          let escola = (col[idxEscola] || '').replace(/["']/g, '').trim();
 
-                if (cod === 0) cod = 5002;
-
-                novosAtos.push({
-                  cod: cod,
-                  escola: escola || ('ESCOLA TÉCNICA ESTADUAL (' + mun + ')'),
-                  municipio: mun || 'MATO GROSSO',
-                  curso: limparNomeCurso(cursoBruto),
-                  ato: (col[idxAto] || 'AUTORIZAÇÃO').replace(/["']/g, '').trim(),
-                  situacao: (col[idxSit] || 'REGULAR').replace(/["']/g, '').trim(),
-                  modelo: (col[idxModelo] || 'Portaria / Resolução').replace(/["']/g, '').trim(),
-                  doc: (col[idxDoc] || 'Ato CEE/MT').replace(/["']/g, '').trim(),
-                  validade: (col[idxVal] || '').replace(/["']/g, '').trim(),
-                  pub: (col[idxPub] || '—').replace(/["']/g, '').trim(),
-                  pag: (col[idxPag] || '—').replace(/["']/g, '').trim()
-                });
-              }
-
-              if (novosAtos.length > 0) {
-                console.log('✅ SIPE Flow: ' + novosAtos.length + ' atos regulatórios carregados com sucesso!');
-                appState.atos = novosAtos;
-                atosCarregados = true;
-              }
+          // Mapeamento inteligente para a ETEC correspondente em Mato Grosso
+          if (typeof ETECS_MASTER !== 'undefined') {
+            let etec = null;
+            if (cod > 0) {
+              etec = ETECS_MASTER.find(e => e.cod === cod);
+            }
+            if (!etec && mun) {
+              const mNorm = normalizeStr(mun);
+              etec = ETECS_MASTER.find(e => normalizeStr(e.key) === mNorm || normalizeStr(e.cidade) === mNorm || mNorm.includes(normalizeStr(e.key)));
+            }
+            if (!etec && escola) {
+              const eNorm = normalizeStr(escola);
+              etec = ETECS_MASTER.find(e => eNorm.includes(normalizeStr(e.key)));
+            }
+            if (etec) {
+              cod = etec.cod;
+              if (!mun) mun = etec.cidade;
+              if (!escola) escola = etec.nomeCompleto;
             }
           }
-        } catch (errAtos) {
-          console.error('❌ Erro na sincronização online de Atos:', errAtos);
+
+          if (cod === 0) cod = 5002;
+
+          novosAtos.push({
+            cod: cod,
+            escola: escola || ('ESCOLA TÉCNICA ESTADUAL (' + mun + ')'),
+            municipio: mun || 'MATO GROSSO',
+            curso: limparNomeCurso(cursoBruto),
+            ato: (col[idxAto] || 'AUTORIZAÇÃO').replace(/["']/g, '').trim(),
+            situacao: (col[idxSit] || 'REGULAR').replace(/["']/g, '').trim(),
+            modelo: (col[idxModelo] || 'Portaria / Resolução').replace(/["']/g, '').trim(),
+            doc: (col[idxDoc] || 'Ato CEE/MT').replace(/["']/g, '').trim(),
+            validade: (col[idxVal] || '').replace(/["']/g, '').trim(),
+            pub: (col[idxPub] || '—').replace(/["']/g, '').trim(),
+            pag: (col[idxPag] || '—').replace(/["']/g, '').trim()
+          });
         }
-      }
 
-      // -----------------------------------------------------------------------
-      // 2. CARREGAR PROCESSOS ADMINISTRATIVOS SIPE (ABA PROCESSOS)
-      // -----------------------------------------------------------------------
-      if (URL_PLANILHA_PROCESSOS_CSV && URL_PLANILHA_PROCESSOS_CSV.trim() !== '') {
-        try {
-          console.log('⏳ SIPE Flow: Buscando processos administrativos do SIPE online...');
-          const respP = await fetch(URL_PLANILHA_PROCESSOS_CSV, { cache: 'no-store' });
-          if (respP.ok) {
-            const csvPText = await respP.text();
-            const rawPLines = csvPText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-            if (rawPLines.length >= 2) {
-              const pHeader = parseCSVLine(rawPLines[0]).map(h => normalizeStr(h));
-              
-              let idxP_Inst = pHeader.findIndex(h => h.includes('INSTITUICAO') || h.includes('ESCOLA'));
-              let idxP_Ano = pHeader.findIndex(h => h === 'ANO');
-              let idxP_Proc = pHeader.findIndex(h => h === 'PROCESSO' || (h.includes('PROCESSO') && !h.includes('TIPO')));
-              let idxP_Tipo = pHeader.findIndex(h => h.includes('TIPO') || h.includes('ATO'));
-              let idxP_Cid = pHeader.findIndex(h => h.includes('CIDADE') || h.includes('MUNICIPIO'));
-              let idxP_Sit = pHeader.findIndex(h => h.includes('SITUACAO') || h.includes('STATUS'));
-              let idxP_Setor = pHeader.findIndex(h => h.includes('SETOR'));
-              let idxP_Resp = pHeader.findIndex(h => h.includes('RESPONSAVEL'));
-              let idxP_Proto = pHeader.findIndex(h => h.includes('PROTOCOLO') || h.includes('DATA'));
-
-              // Fallbacks baseados na estrutura oficial de 9 colunas do robô SIPE
-              if (idxP_Inst === -1) idxP_Inst = 0;
-              if (idxP_Ano === -1) idxP_Ano = 1;
-              if (idxP_Proc === -1) idxP_Proc = 2;
-              if (idxP_Tipo === -1) idxP_Tipo = 3;
-              if (idxP_Cid === -1) idxP_Cid = 4;
-              if (idxP_Sit === -1) idxP_Sit = 5;
-              if (idxP_Setor === -1) idxP_Setor = 6;
-              if (idxP_Resp === -1) idxP_Resp = 7;
-              if (idxP_Proto === -1) idxP_Proto = 8;
-
-              const novosProcessos = [];
-
-              for (let i = 1; i < rawPLines.length; i++) {
-                const col = parseCSVLine(rawPLines[i]);
-                if (col.length < 3) continue;
-
-                const procNum = (col[idxP_Proc] || '').replace(/["']/g, '').trim();
-                if (!procNum) continue;
-
-                let inst = (col[idxP_Inst] || '').replace(/["']/g, '').trim();
-                let cid = (col[idxP_Cid] || '').replace(/["']/g, '').trim().toUpperCase();
-                let cod = 0;
-
-                // Associação com a ETEC Master
-                if (typeof ETECS_MASTER !== 'undefined') {
-                  const cNorm = normalizeStr(cid);
-                  const iNorm = normalizeStr(inst);
-                  let etec = ETECS_MASTER.find(e => normalizeStr(e.cidade) === cNorm || normalizeStr(e.key) === cNorm || iNorm.includes(normalizeStr(e.key)));
-                  if (etec) {
-                    cod = etec.cod;
-                    if (!cid) cid = etec.cidade;
-                    if (!inst) inst = etec.nomeCompleto;
-                  }
-                }
-
-                novosProcessos.push({
-                  cod: cod,
-                  instituicao: inst,
-                  ano: (col[idxP_Ano] || '2026').replace(/["']/g, '').trim(),
-                  processo: procNum,
-                  tipoAto: (col[idxP_Tipo] || 'PROCESSO REGULATÓRIO').replace(/["']/g, '').trim(),
-                  cidade: cid || 'MATO GROSSO',
-                  situacao: (col[idxP_Sit] || 'EM ANDAMENTO').replace(/["']/g, '').trim(),
-                  setor: (col[idxP_Setor] || 'CEE/MT').replace(/["']/g, '').trim(),
-                  responsavel: (col[idxP_Resp] || 'SECITECI').replace(/["']/g, '').trim(),
-                  protocoladoEm: (col[idxP_Proto] || '—').replace(/["']/g, '').trim()
-                });
-              }
-
-              if (novosProcessos.length > 0) {
-                console.log('✅ SIPE Flow: ' + novosProcessos.length + ' processos carregados com sucesso do SIPE!');
-                appState.processos = novosProcessos;
-                processosCarregados = true;
-              }
-            }
-          }
-        } catch (errP) {
-          console.error('❌ Erro na sincronização online de Processos:', errP);
+        if (novosAtos.length > 0) {
+          console.log('✅ SIPE Flow: ' + novosAtos.length + ' atos carregados com sucesso do Google Sheets!');
+          appState.atos = novosAtos;
+          appState.customSourceLabel = 'PLANILHA ONLINE GOOGLE (' + novosAtos.length + ' CURSOS)';
+          return true;
         }
-      }
-
-      // Atualiza o selo da barra de status com o resumo real
-      if (atosCarregados || processosCarregados) {
-        appState.customSourceLabel = 'PLANILHA GOOGLE ON-LINE (' + appState.atos.length + ' ATOS · ' + appState.processos.length + ' PROCESSOS SIPE)';
-        return true;
+      } catch (err) {
+        console.error('❌ Erro na sincronização online com Google Sheets:', err);
       }
       return false;
     }
@@ -1640,9 +1540,9 @@
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
           window.lucide.createIcons();
         }
-        alert('✅ Sincronização concluída com sucesso!\n• ' + appState.atos.length + ' atos regulatórios\n• ' + appState.processos.length + ' processos administrativos SIPE\n\nAuditoria cruzada e cobertura 100% atualizadas em tempo real!');
+        alert('✅ Sincronização concluída com sucesso!\n' + appState.atos.length + ' cursos regulatórios carregados diretamente da Planilha Google.');
       } else {
-        alert('⚠️ Não foi possível sincronizar com as planilhas no momento. Mantendo base referencial.');
+        alert('⚠️ Não foi possível sincronizar com a planilha online no momento. Mantendo base referencial.');
         renderAll();
       }
     }
@@ -3163,17 +3063,37 @@
           a.cod, a.escola, a.municipio, a.curso, a.ato, a.doc, a.validade,
           a.daysRemaining !== null ? a.daysRemaining : ``,
           a.category, proc, procSit
-        ].map(v => `"${String(v).replace(/"/g, `""`)}"`);
+        ].map(v => `"${String(v !== undefined && v !== null ? v : '').replace(/"/g, `""`)}"`);
         csvRows.push(cols.join(`;`));
       });
-      const csvString = `\uFEFF` + csvRows.join(`\n`);
+      const csvString = `\uFEFF` + csvRows.join(`\r\n`);
+      const filename = `SIPE_Flow_MT_Relatorio_ETECs_${appState.selectedEtec === 'TODAS' ? 'REDE_COMPLETA' : 'ETEC_' + appState.selectedEtec}.csv`;
 
+      // 1. Download padrão para qualquer navegador Web (Chrome, Edge, Firefox)
+      try {
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log('✅ Relatório CSV exportado com sucesso via navegador!');
+        return;
+      } catch (errBlob) {
+        console.warn('⚠️ Falha no download padrão Blob, tentando fallback:', errBlob);
+      }
+
+      // 2. Fallback para ambiente Studio / container
       if (window.notebookAppApi && typeof window.notebookAppApi.triggerFileDownload === `function`) {
         window.notebookAppApi.triggerFileDownload({
           content: csvString,
           contentType: `text/csv`,
           encoding: `UTF-8`,
-          filename: `SIPE_Flow_MT_Relatorio_ETECs.csv`
+          filename: filename
         });
       }
     }
@@ -3183,21 +3103,9 @@
     // =========================================================================
     async function initApp() {
       await loadSavedState();
+      await carregarDadosPlanilhaOnline();
       populateEtecDropdown();
       syncFilterControlsFromState();
-
-      // Renderiza imediatamente com dados referenciais garantidos
-      renderAll();
-
-      // Busca atualizações ao vivo da Planilha Google (Atos + Processos) em segundo plano
-      carregarDadosPlanilhaOnline().then(ok => {
-        if (ok) {
-          renderAll();
-          if (window.lucide && typeof window.lucide.createIcons === 'function') {
-            window.lucide.createIcons();
-          }
-        }
-      });
 
       // Sync active tabs from restored state
       const crossBtn = document.querySelector(`[data-cross-tab="${appState.crossTab}"]`);
