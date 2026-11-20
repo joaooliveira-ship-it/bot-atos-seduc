@@ -260,54 +260,16 @@
     .btn-header-outline:hover:not(:disabled) {
       background: color-mix(in srgb, var(--on-primary) 12%, var(--primary));
     }
-    .btn-header-outline {
-      display: inline-flex !important;
-      align-items: center !important;
-      gap: 0.5rem !important;
-      background: rgba(255, 255, 255, 0.08) !important;
-      border: 1px solid rgba(255, 255, 255, 0.35) !important;
-      color: #ffffff !important;
-      min-height: 38px !important;
-      font-size: 0.8125rem !important;
-      font-weight: 600 !important;
-      padding: 0.4rem 0.95rem !important;
-      border-radius: 6px !important;
-      cursor: pointer !important;
-      transition: all 0.2s ease !important;
-    }
-    .btn-header-outline:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.18) !important;
-      border-color: #ffffff !important;
-    }
-
     .btn-header-brass {
-      display: inline-flex !important;
-      align-items: center !important;
-      gap: 0.5rem !important;
-      background: #f59e0b !important; /* Amarelo ouro vibrante */
-      border: 1px solid #d97706 !important;
-      color: #0f1f38 !important; /* Azul marinho contrastante */
-      min-height: 38px !important;
-      font-size: 0.8125rem !important;
-      font-weight: 700 !important;
-      padding: 0.4rem 1.05rem !important;
-      border-radius: 6px !important;
-      cursor: pointer !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
-      transition: all 0.2s ease !important;
+      background: var(--surface-container-low);
+      color: var(--primary);
+      border-color: var(--outline);
+      min-height: 40px;
+      font-size: 0.8125rem;
+      font-weight: 600;
     }
     .btn-header-brass:hover:not(:disabled) {
-      background: #fbbf24 !important;
-      border-color: #f59e0b !important;
-      transform: translateY(-1px) !important;
-      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3) !important;
-    }
-
-    .btn-header-outline svg,
-    .btn-header-brass svg {
-      width: 16px !important;
-      height: 16px !important;
-      flex-shrink: 0 !important;
+      background: var(--surface-container);
     }
     .btn-sm {
       min-height: 36px;
@@ -884,7 +846,7 @@
     }
 
     /* ==========================================================================
-       CABEÇALHO OFICIAL DEFINITIVO — SECITECI & SIPE FLOW MT
+       CABEÇALHO OFICIAL SECITECI & SIPE FLOW MT (DEFINITIVO)
        ========================================================================== */
     .title-band {
       background: #0f1f38 !important;
@@ -892,6 +854,7 @@
       padding: 1.25rem 2rem !important;
       color: #ffffff !important;
     }
+
     .title-band-inner {
       max-width: 1750px !important;
       margin: 0 auto !important;
@@ -901,30 +864,36 @@
       gap: 2rem !important;
       flex-wrap: wrap !important;
     }
+
+    /* Coluna Esquerda: Logos + Título */
     .header-branding-col {
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-start !important;
       gap: 1.15rem !important;
     }
+
     .header-logos-group {
       display: flex !important;
       align-items: center !important;
       gap: 1.25rem !important;
       flex-shrink: 0 !important;
     }
+
     .header-logo-seciteci {
       height: 90px !important;
       width: auto !important;
       object-fit: contain !important;
       display: block !important;
     }
+
     .logo-divider {
       width: 1.5px !important;
       height: 65px !important;
       background: rgba(255, 255, 255, 0.25) !important;
       display: block !important;
     }
+
     .header-logo-sipe {
       width: 76px !important;
       height: 76px !important;
@@ -935,17 +904,21 @@
       flex-shrink: 0 !important;
       display: block !important;
     }
+
     .header-main-title {
+      color: #ffffff !important;
       font-size: 1.35rem !important;
       font-weight: 800 !important;
-      letter-spacing: 0.05em !important;
-      color: #ffffff !important;
-      margin: 0 !important;
+      letter-spacing: 0.04em !important;
       text-transform: none !important;
-      line-height: 1.2 !important;
-      text-align: left !important;
+      margin: 0 !important;
       padding-top: 0.35rem !important;
+      text-align: left !important;
+      line-height: 1.25 !important;
+      font-family: inherit !important;
     }
+
+    /* Coluna Direita: Metadados + Botões no Canto Inferior Direito */
     .header-meta-actions {
       display: flex !important;
       flex-direction: column !important;
@@ -953,6 +926,7 @@
       gap: 0.75rem !important;
       margin-left: auto !important;
     }
+
     .header-meta-strip {
       display: flex !important;
       align-items: center !important;
@@ -964,16 +938,75 @@
       padding: 0.35rem 0.85rem !important;
       border-radius: 6px !important;
       border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      white-space: nowrap !important;
     }
+
     .header-meta-strip strong {
       color: #ffffff !important;
       font-weight: 700 !important;
     }
+
     .header-btn-row {
       display: flex !important;
       align-items: center !important;
       gap: 0.75rem !important;
     }
+
+    .btn-header-outline {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.5rem !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.35) !important;
+      color: #ffffff !important;
+      min-height: 38px !important;
+      font-size: 0.8125rem !important;
+      font-weight: 600 !important;
+      padding: 0.4rem 0.95rem !important;
+      border-radius: 6px !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      text-decoration: none !important;
+    }
+
+    .btn-header-outline:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.18) !important;
+      border-color: #ffffff !important;
+    }
+
+    /* Botão Amarelo Dourado Oficial com Alto Contraste */
+    .btn-header-brass {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.5rem !important;
+      background: #f59e0b !important;
+      border: 1px solid #d97706 !important;
+      color: #0f1f38 !important;
+      min-height: 38px !important;
+      font-size: 0.8125rem !important;
+      font-weight: 700 !important;
+      padding: 0.4rem 1.05rem !important;
+      border-radius: 6px !important;
+      cursor: pointer !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+      transition: all 0.2s ease !important;
+      text-decoration: none !important;
+    }
+
+    .btn-header-brass:hover:not(:disabled) {
+      background: #fbbf24 !important;
+      border-color: #f59e0b !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3) !important;
+    }
+
+    .btn-header-outline svg,
+    .btn-header-brass svg {
+      width: 16px !important;
+      height: 16px !important;
+      flex-shrink: 0 !important;
+    }
+
   </style>
 </head>
 <body>
@@ -997,7 +1030,7 @@
           <span id="data-source-badge">FONTE: <strong>SIGEDUCA / CEE-MT</strong> (397 ATOS · 795 PROCESSOS SIPE)</span>
         </div>
         <div class="header-btn-row">
-          <!-- Botão Sincronizar Dados com Ícone de Atualizar Embutido -->
+          <!-- Botão Sincronizar Dados -->
           <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha Oficial">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 2v6h-6"></path>
@@ -1008,7 +1041,7 @@
             Sincronizar Dados
           </button>
           
-          <!-- Botão Amarelo Dourado com Ícone de Baixar Embutido -->
+          <!-- Botão Amarelo Dourado Exportar Relatório CSV -->
           <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()" title="Exportar dados filtrados em planilha CSV">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1513,9 +1546,9 @@
     // =========================================================================
     // 2. BASELINE OPERATIONAL DATASET (SIGEDUCA 11-COL ATOS + SIPE 9-COL PROC)
     // =========================================================================
-    
+
     // =========================================================================
-    // CONEXÃO COM A PLANILHA GOOGLE (DADOS AO VIVO EM TEMPO REAL)
+    // INTEGRAÇÃO COM A PLANILHA OFICIAL GOOGLE (TEMPO REAL)
     // =========================================================================
     const URL_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9-yb5ewD5LobCyj82S4yLTtUINPWk9bx8HngF4flfJ3xT4tQhrkRm4_wM4M8EGFhQkedrfLLqMvI3/pub?gid=0&single=true&output=csv";
 
@@ -1541,7 +1574,7 @@
     function normalizeStr(text) {
       return String(text || '')
         .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
+        .replace(/[\u0300-\u036f]/g, '')
         .toUpperCase()
         .trim();
     }
@@ -1570,10 +1603,9 @@
           return false;
         }
         const csvText = await resp.text();
-        const rawLines = csvText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const rawLines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
         if (rawLines.length < 2) return false;
 
-        // Detectar colunas pelo cabeçalho da planilha
         const header = parseCSVLine(rawLines[0]).map(h => normalizeStr(h));
         
         let idxCod = header.findIndex(h => h.includes('CODIGO') || h.includes('COD'));
@@ -1588,7 +1620,6 @@
         let idxPub = header.findIndex(h => h.includes('PUBLICACAO'));
         let idxPag = header.findIndex(h => h.includes('PAG'));
 
-        // Fallbacks baseados na estrutura oficial de 11 colunas do robô
         if (idxCod === -1) idxCod = 0;
         if (idxEscola === -1) idxEscola = 1;
         if (idxMun === -1) idxMun = 2;
@@ -1614,7 +1645,6 @@
           let mun = (col[idxMun] || '').replace(/["']/g, '').trim().toUpperCase();
           let escola = (col[idxEscola] || '').replace(/["']/g, '').trim();
 
-          // Mapeamento inteligente para a ETEC correspondente em Mato Grosso
           if (typeof ETECS_MASTER !== 'undefined') {
             let etec = null;
             if (cod > 0) {
@@ -1666,19 +1696,30 @@
 
     async function forcarSincronizacaoPlanilha() {
       const badge = document.getElementById('data-source-badge');
-      if (badge) badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
+      if (badge) {
+        badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
+      }
       const ok = await carregarDadosPlanilhaOnline();
+      
+      const totalAtos = (appState.atos && appState.atos.length) ? appState.atos.length : 397;
+      const totalProc = (appState.processos && appState.processos.length) ? appState.processos.length : 795;
+      
+      if (badge) {
+        badge.innerHTML = 'FONTE: <strong>SIGEDUCA / CEE-MT</strong> (' + totalAtos + ' ATOS · ' + totalProc + ' PROCESSOS SIPE)';
+      }
+
       if (ok) {
         renderAll();
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
           window.lucide.createIcons();
         }
-        alert('✅ Sincronização concluída com sucesso!\n' + appState.atos.length + ' cursos regulatórios carregados diretamente da Planilha Google.');
+        alert('✅ Sincronização concluída com sucesso!\n' + totalAtos + ' cursos regulatórios atualizados diretamente da Planilha Google.');
       } else {
         alert('⚠️ Não foi possível sincronizar com a planilha online no momento. Mantendo base referencial.');
         renderAll();
       }
     }
+
 
     function buildBaselineAtos() {
       const rows = [
@@ -3201,6 +3242,22 @@
       });
       const csvString = `\uFEFF` + csvRows.join(`\n`);
 
+      // Download universal compatível com Web Browser e ambiente Studio
+      try {
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'SIPE_Flow_MT_Relatorio_ETECs.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.warn('Download padrão falhou, tentando fallback:', e);
+      }
+
       if (window.notebookAppApi && typeof window.notebookAppApi.triggerFileDownload === `function`) {
         window.notebookAppApi.triggerFileDownload({
           content: csvString,
@@ -3216,7 +3273,6 @@
     // =========================================================================
     async function initApp() {
       await loadSavedState();
-      await carregarDadosPlanilhaOnline();
       populateEtecDropdown();
       syncFilterControlsFromState();
 
