@@ -1617,28 +1617,28 @@
         }
       }
 
-      if (atosCarregados || processosCarregados) {
-        appState.customSourceLabel = 'PLANILHA ON-LINE (' + appState.atos.length + ' ATOS · ' + appState.processos.length + ' PROCESSOS SIPE)';
-        return true;
-      }
-      return false;
-    }
+   if (atosCarregados || processosCarregados) { 
+   appState.customSourceLabel = 'SIGEDUCA / CEE-MT (' + appState.atos.length + ' ATOS · ' + appState.processos.length + ' PROCESSOS SIPE)'; 
+   return true; 
+   } 
+   return false; 
+   }
 
-    async function forcarSincronizacaoPlanilha() {
-      const badge = document.getElementById('data-source-badge');
-      if (badge) badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
-      const ok = await carregarDadosPlanilhaOnline();
-      if (ok) {
-        renderAll();
-        if (window.lucide && typeof window.lucide.createIcons === 'function') {
-          window.lucide.createIcons();
-        }
-        alert('✅ Sincronização concluída com sucesso!\n• ' + appState.atos.length + ' atos regulatórios\n• ' + appState.processos.length + ' processos administrativos SIPE\n\nAuditoria cruzada e cobertura 100% atualizadas em tempo real!');
-      } else {
-        alert('⚠️ Não foi possível sincronizar com a planilha online no momento. Mantendo base referencial.');
-        renderAll();
-      }
-    }
+   async function forcarSincronizacaoPlanilha() { 
+   const badge = document.getElementById('data-source-badge'); 
+   if (badge) badge.innerHTML = 'BASE OFICIAL: <strong>SINCRONIZANDO DADOS INTEGRADOS...</strong>'; 
+   const ok = await carregarDadosPlanilhaOnline(); 
+   if (ok) { 
+   renderAll(); 
+   if (window.lucide && typeof window.lucide.createIcons === 'function') { 
+   window.lucide.createIcons(); 
+   } 
+   alert('✅ Sincronização concluída com sucesso!\n• ' + appState.atos.length + ' atos regulatórios\n• ' + appState.processos.length + ' processos administrativos SIPE\n\nAuditoria cruzada e cobertura 100% atualizadas em tempo real!'); 
+   } else { 
+   alert('⚠️ Não foi possível atualizar os dados integrados no momento. Mantendo base referencial.'); 
+   renderAll(); 
+    } 
+   }
 
     function buildBaselineAtos() {
       const rows = [
