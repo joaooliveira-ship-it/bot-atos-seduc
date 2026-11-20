@@ -1611,7 +1611,7 @@
         let idxCod = header.findIndex(h => h.includes('CODIGO') || h.includes('COD'));
         let idxEscola = header.findIndex(h => h.includes('NOME DA INSTITUICAO') || h.includes('ESCOLA'));
         let idxMun = header.findIndex(h => h.includes('MUNICIPIO'));
-        let idxCurso = header.findIndex(h => h === 'CURSO' || h.includes('CURSO'));
+        let idxCurso = header.findIndex(h => h === 'CURSO' || (h.includes('CURSO') && !h.includes('MUNICIPIO') && !h.includes('CIDADE')));
         let idxAto = header.findIndex(h => h.includes('ATO'));
         let idxSit = header.findIndex(h => h.includes('SITUACAO'));
         let idxModelo = header.findIndex(h => h.includes('MODELO'));
