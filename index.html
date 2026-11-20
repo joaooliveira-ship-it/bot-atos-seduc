@@ -158,6 +158,37 @@
       gap: var(--space-sm);
       flex-wrap: wrap;
     }
+
+    .header-branding { 
+    display: flex; 
+    align-items: flex-start; 
+    gap: 1.25rem; 
+    } 
+    .header-logo-sipe { 
+    width: 54px; 
+    height: 54px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    object-fit: cover; 
+    flex-shrink: 0; 
+    margin-top: 4px; 
+    }
+    .header-branding { 
+    display: flex; 
+    align-items: flex-start; 
+    gap: 1.25rem; 
+    } 
+    .header-logo-sipe { 
+    width: 54px; 
+    height: 54px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    object-fit: cover; 
+    flex-shrink: 0; 
+    margin-top: 4px; 
+    }
     .title-band h1 {
       font-family: var(--font-headline);
       font-weight: 400;
@@ -851,31 +882,38 @@
   <!-- CHARTER NAVY TITLE BAND -->
   <header class="title-band">
     <div class="title-band-inner">
-      <div>
-        <div class="gov-kicker">
-          <span>GOVERNO DO ESTADO DE MATO GROSSO</span>
-          <span aria-hidden="true">·</span>
-          <span>SECITECI / COORDENADORIA DE FISCALIZAÇÃO</span>
-          <span aria-hidden="true">·</span>
-          <span>SIPE FLOW MT</span>
+      <div class="header-branding">
+        <img src="sipe_flow_icon.png" alt="Logo SIPE Flow MT" class="header-logo-sipe">
+        <div>
+          <div class="gov-kicker">
+            <span>GOVERNO DE MATO GROSSO</span>
+            <span aria-hidden="true">·</span>
+            <span>SECITECI / COORDENADORIA DE FISCALIZAÇÃO</span>
+            <span aria-hidden="true">·</span>
+            <span>SIPE FLOW MT</span>
+          </div>
+          <h1>Sala de Situação — Monitoramento Regulatório das 17 ETECs</h1>
+          <p class="lede">
+            Auditoria cruzada e inteligência regulatória em tempo real sobre os cursos técnicos da Rede de Educação Profissional de Mato Grosso.
+          </p>
         </div>
-        <h1>Sala de Situação — Monitoramento Regulatório das 17 ETECs</h1>
-        <p class="lede">
-          Painel executivo georreferenciado para acompanhamento integrado de Atos Autorizativos (SIGEDUCA / CEE-MT) e Processos Administrativos (Sistemática / SIPE) da Educação Profissional Técnica de Nível Médio.
-        </p>
       </div>
       <div class="header-meta-actions">
         <div class="header-meta-strip">
-          <span>DATA-BASE: <strong id="data-base-val"> 18/11/2026</strong></span>
+          <span>DATA-BASE: <strong id="data-base-val">18/11/2026</strong></span>
           <span>REDE MONITORADA: <strong>17 ETECs</strong></span>
-         <span id="data-source-badge">BASE OFICIAL: <strong>SIGEDUCA / CEE-MT</strong></span>
+          <span id="data-source-badge">BASE OFICIAL: <strong>SIGEDUCA / CEE-MT</strong></span>
         </div>
         <div class="header-btn-row">
-          <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha Google">
+          <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha">
             <i data-lucide="refresh-cw" aria-hidden="true" style="width:16px;height:16px;"></i>
-            Sincronizar Dados
+            Sincronizar Planilha
           </button>
           
+          <button type="button" class="btn btn-header-outline" onclick="toggleImportDrawer()">
+            <i data-lucide="upload" aria-hidden="true" style="width:16px;height:16px;"></i>
+            Importar Dados SIGEDUCA
+          </button>
           <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()">
             <i data-lucide="download" aria-hidden="true" style="width:16px;height:16px;"></i>
             Exportar Relatório CSV
