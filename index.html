@@ -1077,11 +1077,145 @@
   gap: 0.45rem !important;
   cursor: pointer !important;
 }
+    /* --- CABEÇALHO OFICIAL SECITECI / MT + SIPE FLOW --- */
+header.title-band {
+  background: #001f3f !important;
+  color: #ffffff !important;
+  padding: 1.25rem 2rem !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.title-band-inner {
+  max-width: 1750px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 2.5rem !important;
+  flex-wrap: nowrap !important;
+}
+
+.header-branding {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2rem !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.header-logos-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* Logo Oficial SECITECI / Mato Grosso (Idêntica ao Portal Oficial) */
+.header-logo-seciteci {
+  height: 80px !important;
+  width: auto !important;
+  max-width: 320px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.logo-divider {
+  width: 1.5px !important;
+  height: 55px !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+
+/* Logo SIPE Flow MT */
+.header-logo-sipe {
+  width: 68px !important;
+  height: 68px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+.header-titles {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.gov-kicker {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+.header-titles h1 {
+  font-size: 1.55rem !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.header-titles .lede {
+  font-size: 0.88rem !important;
+  line-height: 1.4 !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  margin: 0 !important;
+  max-width: 720px !important;
+}
+
+.header-meta-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 0.85rem !important;
+  flex-shrink: 0 !important;
+}
+
+.header-meta-strip {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+  font-size: 0.8rem !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  padding: 0.4rem 1rem !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  white-space: nowrap !important;
+}
+
+.header-meta-strip strong {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.header-btn-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
   </style>
 </head>
 <body>
 
-<!-- CHARTER NAVY TITLE BAND -->
+  <!-- CHARTER NAVY TITLE BAND -->
   <header class="title-band">
     <div class="title-band-inner">
       <div class="header-branding">
@@ -1110,7 +1244,7 @@
         <div class="header-meta-strip">
           <span>DATA-BASE: <strong id="data-base-val">20/11/2026</strong></span>
           <span>REDE MONITORADA: <strong>17 ETECs</strong></span>
-          <span id="data-source-badge">BASE OFICIAL: <strong>SIGEDUCA / CEE-MT</strong></span>
+          <span id="data-source-badge">FONTE: <strong>SIGEDUCA / CEE-MT (397 ATOS · 795 PROCESSOS SIPE)</strong></span>
         </div>
         <div class="header-btn-row">
           <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha">
