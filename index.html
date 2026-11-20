@@ -905,11 +905,183 @@
       object-fit: cover; 
       flex-shrink: 0; 
     }
+    /* ==========================================================================
+   CSS DO CABEÇALHO EXECUTIVO — SALA DE SITUAÇÃO SIPE FLOW MT
+   ========================================================================== */
+
+.title-band {
+  background: linear-gradient(180deg, #0b192c 0%, #07111e 100%) !important;
+  color: #f8fafc !important;
+  padding: 1.25rem 2rem !important;
+  border-bottom: 2px solid rgba(212, 160, 23, 0.4) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  width: 100% !important;
+}
+
+.title-band-inner {
+  max-width: 1650px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 2rem !important;
+}
+
+/* Bloco Esquerdo: Logos + Títulos */
+.header-branding {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.75rem !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* Agrupamento das Logos */
+.header-logos-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* Régua Oficial SECITECI / Governo de MT (TAMANHO NOBRE E DESTACADO) */
+.header-logo-seciteci {
+  height: 64px !important;
+  max-width: 270px !important;
+  width: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+/* Divisória Vertical Nobre */
+.logo-divider {
+  width: 1px !important;
+  height: 52px !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  display: block !important;
+}
+
+/* Logo SIPE Flow MT */
+.header-logo-sipe {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+/* Bloco dos Textos (Organizado e Alinhado) */
+.header-titles {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+}
+
+/* Linha Superior Institucional (Kicker) */
+.gov-kicker {
+  font-size: 0.75rem !important;
+  letter-spacing: 0.12em !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+.gov-kicker span:last-child {
+  color: #d4a017 !important; /* Destaque Ouro no SIPE FLOW MT */
+}
+
+/* Título Principal */
+.header-titles h1 {
+  font-size: 1.55rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Subtítulo Executivo (Lede) */
+.header-titles .lede {
+  font-size: 0.88rem !important;
+  color: #cbd5e1 !important;
+  margin: 0 !important;
+  line-height: 1.35 !important;
+  max-width: 820px !important;
+}
+
+/* Bloco Direito: Metadados + Botões */
+.header-meta-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 0.75rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* Faixa de Metadados */
+.header-meta-strip {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+  font-size: 0.78rem !important;
+  color: #94a3b8 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding: 0.45rem 1rem !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.header-meta-strip strong {
+  color: #ffffff !important;
+}
+
+/* Linha de Botões */
+.header-btn-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+}
+
+.btn-header-outline {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 0.9rem !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  cursor: pointer !important;
+}
+
+.btn-header-brass {
+  background: #ffffff !important;
+  border: 1px solid #ffffff !important;
+  color: #0b192c !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  cursor: pointer !important;
+}
   </style>
 </head>
 <body>
 
- <!-- CHARTER NAVY TITLE BAND -->
+<!-- CHARTER NAVY TITLE BAND -->
   <header class="title-band">
     <div class="title-band-inner">
       <div class="header-branding">
@@ -920,7 +1092,7 @@
           <!-- Identidade SIPE Flow MT -->
           <img src="sipe_flow_icon.png" alt="SIPE Flow MT" class="header-logo-sipe">
         </div>
-        <div>
+        <div class="header-titles">
           <div class="gov-kicker">
             <span>GOVERNO DE MATO GROSSO</span>
             <span aria-hidden="true">·</span>
@@ -936,7 +1108,7 @@
       </div>
       <div class="header-meta-actions">
         <div class="header-meta-strip">
-          <span>DATA-BASE: <strong id="data-base-val">18/11/2026</strong></span>
+          <span>DATA-BASE: <strong id="data-base-val">20/11/2026</strong></span>
           <span>REDE MONITORADA: <strong>17 ETECs</strong></span>
           <span id="data-source-badge">BASE OFICIAL: <strong>SIGEDUCA / CEE-MT</strong></span>
         </div>
@@ -958,7 +1130,7 @@
       </div>
     </div>
   </header>
-
+  
   <main class="page-grid">
 
     <!-- INLINE DATA IMPORT DRAWER (hidden by default) -->
