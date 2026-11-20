@@ -260,16 +260,54 @@
     .btn-header-outline:hover:not(:disabled) {
       background: color-mix(in srgb, var(--on-primary) 12%, var(--primary));
     }
+    .btn-header-outline {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.5rem !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.35) !important;
+      color: #ffffff !important;
+      min-height: 38px !important;
+      font-size: 0.8125rem !important;
+      font-weight: 600 !important;
+      padding: 0.4rem 0.95rem !important;
+      border-radius: 6px !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+    }
+    .btn-header-outline:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.18) !important;
+      border-color: #ffffff !important;
+    }
+
     .btn-header-brass {
-      background: var(--surface-container-low);
-      color: var(--primary);
-      border-color: var(--outline);
-      min-height: 40px;
-      font-size: 0.8125rem;
-      font-weight: 600;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.5rem !important;
+      background: #f59e0b !important; /* Amarelo ouro vibrante */
+      border: 1px solid #d97706 !important;
+      color: #0f1f38 !important; /* Azul marinho contrastante */
+      min-height: 38px !important;
+      font-size: 0.8125rem !important;
+      font-weight: 700 !important;
+      padding: 0.4rem 1.05rem !important;
+      border-radius: 6px !important;
+      cursor: pointer !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+      transition: all 0.2s ease !important;
     }
     .btn-header-brass:hover:not(:disabled) {
-      background: var(--surface-container);
+      background: #fbbf24 !important;
+      border-color: #f59e0b !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3) !important;
+    }
+
+    .btn-header-outline svg,
+    .btn-header-brass svg {
+      width: 16px !important;
+      height: 16px !important;
+      flex-shrink: 0 !important;
     }
     .btn-sm {
       min-height: 36px;
@@ -844,7 +882,7 @@
         scroll-behavior: auto !important;
       }
     }
-  
+
     /* ==========================================================================
        CABEÇALHO OFICIAL DEFINITIVO — SECITECI & SIPE FLOW MT
        ========================================================================== */
@@ -853,10 +891,7 @@
       border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
       padding: 1.25rem 2rem !important;
       color: #ffffff !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
     }
-
     .title-band-inner {
       max-width: 1750px !important;
       margin: 0 auto !important;
@@ -866,43 +901,30 @@
       gap: 2rem !important;
       flex-wrap: wrap !important;
     }
-
-    /* Coluna Esquerda: Logos + Título */
     .header-branding-col {
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-start !important;
       gap: 1.15rem !important;
-      flex: 1 !important;
     }
-
     .header-logos-group {
       display: flex !important;
       align-items: center !important;
       gap: 1.25rem !important;
       flex-shrink: 0 !important;
     }
-
-    /* Logo SECITECI / Governo MT (Proporção Real do Portal MT: 90px) */
     .header-logo-seciteci {
       height: 90px !important;
       width: auto !important;
-      max-width: 360px !important;
       object-fit: contain !important;
       display: block !important;
-      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35)) !important;
     }
-
-    /* Divisória Vertical Nobre */
     .logo-divider {
       width: 1.5px !important;
       height: 65px !important;
       background: rgba(255, 255, 255, 0.25) !important;
       display: block !important;
-      flex-shrink: 0 !important;
     }
-
-    /* Logo Oficial SIPE Flow MT Ampliada e Nítida (76px) */
     .header-logo-sipe {
       width: 76px !important;
       height: 76px !important;
@@ -913,31 +935,24 @@
       flex-shrink: 0 !important;
       display: block !important;
     }
-
-    /* Título Institucional com Respiro e Alinhado à Esquerda */
     .header-main-title {
-      color: #ffffff !important;
       font-size: 1.35rem !important;
       font-weight: 800 !important;
-      letter-spacing: 0.04em !important;
-      text-transform: none !important;
+      letter-spacing: 0.05em !important;
+      color: #ffffff !important;
       margin: 0 !important;
-      padding-top: 0.35rem !important;
+      text-transform: none !important;
+      line-height: 1.2 !important;
       text-align: left !important;
-      line-height: 1.25 !important;
-      font-family: inherit !important;
+      padding-top: 0.35rem !important;
     }
-
-    /* Coluna Direita: Metadados + Botões no Canto Inferior Direito */
     .header-meta-actions {
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-end !important;
       gap: 0.75rem !important;
       margin-left: auto !important;
-      flex-shrink: 0 !important;
     }
-
     .header-meta-strip {
       display: flex !important;
       align-items: center !important;
@@ -949,25 +964,21 @@
       padding: 0.35rem 0.85rem !important;
       border-radius: 6px !important;
       border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      white-space: nowrap !important;
     }
-
     .header-meta-strip strong {
       color: #ffffff !important;
       font-weight: 700 !important;
     }
-
     .header-btn-row {
       display: flex !important;
       align-items: center !important;
       gap: 0.75rem !important;
     }
-
   </style>
 </head>
 <body>
 
-    <!-- CHARTER NAVY TITLE BAND -->
+  <!-- CHARTER NAVY TITLE BAND -->
   <header class="title-band">
     <div class="title-band-inner">
       <div class="header-branding-col">
@@ -986,13 +997,24 @@
           <span id="data-source-badge">FONTE: <strong>SIGEDUCA / CEE-MT</strong> (397 ATOS · 795 PROCESSOS SIPE)</span>
         </div>
         <div class="header-btn-row">
+          <!-- Botão Sincronizar Dados com Ícone de Atualizar Embutido -->
           <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha Oficial">
-            <i data-lucide="refresh-cw" aria-hidden="true" style="width:16px;height:16px;"></i>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 2v6h-6"></path>
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+              <path d="M3 22v-6h6"></path>
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+            </svg>
             Sincronizar Dados
           </button>
           
-          <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()">
-            <i data-lucide="download" aria-hidden="true" style="width:16px;height:16px;"></i>
+          <!-- Botão Amarelo Dourado com Ícone de Baixar Embutido -->
+          <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()" title="Exportar dados filtrados em planilha CSV">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
             Exportar Relatório CSV
           </button>
         </div>
@@ -1643,28 +1665,17 @@
       return false;
     }
 
-        async function forcarSincronizacaoPlanilha() {
+    async function forcarSincronizacaoPlanilha() {
       const badge = document.getElementById('data-source-badge');
-      if (badge) {
-        badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
-      }
+      if (badge) badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
       const ok = await carregarDadosPlanilhaOnline();
       if (ok) {
-        const totalAtos = (appState.atos && appState.atos.length) ? appState.atos.length : 397;
-        const totalProc = (appState.processos && appState.processos.length) ? appState.processos.length : 795;
-        if (badge) {
-          badge.innerHTML = 'FONTE: <strong>SIGEDUCA / CEE-MT</strong> (' + totalAtos + ' ATOS · ' + totalProc + ' PROCESSOS SIPE)';
-        }
         renderAll();
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
           window.lucide.createIcons();
         }
-        alert('✅ Sincronização concluída com sucesso!
-' + totalAtos + ' cursos regulatórios atualizados diretamente da Planilha Google.');
+        alert('✅ Sincronização concluída com sucesso!\n' + appState.atos.length + ' cursos regulatórios carregados diretamente da Planilha Google.');
       } else {
-        if (badge) {
-          badge.innerHTML = 'FONTE: <strong>SIGEDUCA / CEE-MT</strong> (397 ATOS · 795 PROCESSOS SIPE)';
-        }
         alert('⚠️ Não foi possível sincronizar com a planilha online no momento. Mantendo base referencial.');
         renderAll();
       }
