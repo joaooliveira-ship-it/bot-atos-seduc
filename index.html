@@ -1570,8 +1570,7 @@
           return false;
         }
         const csvText = await resp.text();
-        const rawLines = csvText.split('
-').map(l => l.trim()).filter(l => l.length > 0);
+        const rawLines = csvText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (rawLines.length < 2) return false;
 
         // Detectar colunas pelo cabeçalho da planilha
