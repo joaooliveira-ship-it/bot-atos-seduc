@@ -1211,6 +1211,147 @@ header.title-band {
   align-items: center !important;
   gap: 0.75rem !important;
 }
+    .title-band {
+  background: linear-gradient(135deg, #0b1e36 0%, #102a4c 100%) !important;
+  color: #ffffff !important;
+  padding: 1.25rem 2rem !important;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.4) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.title-band-inner {
+  max-width: 1750px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  gap: 2rem !important;
+}
+
+.header-left-col {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  flex: 1 !important;
+}
+
+.header-logos-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+}
+
+.header-logo-seciteci {
+  height: 60px !important;
+  width: auto !important;
+  max-width: 280px !important;
+  object-fit: contain !important;
+}
+
+.logo-divider {
+  width: 1px !important;
+  height: 44px !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.header-logo-sipe {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+.header-title-clean {
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+}
+
+.header-right-col {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  flex-shrink: 0 !important;
+}
+
+.header-meta-strip {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+  font-size: 0.82rem !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  letter-spacing: 0.4px !important;
+}
+
+.header-meta-strip span strong {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+#data-source-badge {
+  background: rgba(255, 255, 255, 0.12) !important;
+  padding: 0.25rem 0.65rem !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+.header-btn-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.btn-header-outline {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.btn-header-outline:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.btn-header-brass {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: #0b1e36 !important;
+  background: linear-gradient(135deg, #e6c875 0%, #d4af37 100%) !important;
+  border: 1px solid #d4af37 !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn-header-brass:hover {
+  filter: brightness(1.08) !important;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.35) !important;
+}
   </style>
 </head>
 <body>
@@ -1218,33 +1359,25 @@ header.title-band {
   <!-- CHARTER NAVY TITLE BAND -->
   <header class="title-band">
     <div class="title-band-inner">
-      <div class="header-branding">
-        <div class="header-logos-group">
+      
+      <!-- CANTO ESQUERDO: LOGOS NO TOPO + TÍTULO LOGO ABAIXO -->
+      <div class="header-left-col">
+        <div class="header-logos-row">
           <!-- Régua Oficial SECITECI / Governo de MT -->
           <img src="layout_set_logo.png" alt="SECITECI — Governo de Mato Grosso" class="header-logo-seciteci">
           <span class="logo-divider" aria-hidden="true"></span>
-          <!-- Identidade SIPE Flow MT -->
+          <!-- Identidade Oficial SIPE Flow MT -->
           <img src="sipe_flow_icon_oficial.png" alt="SIPE Flow MT" class="header-logo-sipe">
         </div>
-        <div class="header-titles">
-          <div class="gov-kicker">
-            <span>GOVERNO DE MATO GROSSO</span>
-            <span aria-hidden="true">·</span>
-            <span>SECITECI / COORDENADORIA DE FISCALIZAÇÃO</span>
-            <span aria-hidden="true">·</span>
-            <span>SIPE FLOW MT</span>
-          </div>
-          <h1>Sala de Situação — Monitoramento Regulatório das 17 ETECs</h1>
-          <p class="lede">
-            Auditoria cruzada e inteligência regulatória em tempo real sobre os cursos técnicos da Rede de Educação Profissional de Mato Grosso.
-          </p>
-        </div>
+        <h1 class="header-title-clean">MONITORAMENTO REGULATÓRIO DAS 17 ETECS</h1>
       </div>
-      <div class="header-meta-actions">
+
+      <!-- CANTO DIREITO: METADADOS NO TOPO + 3 BOTÕES NO CANTO INFERIOR DIREITO -->
+      <div class="header-right-col">
         <div class="header-meta-strip">
-          <span>DATA-BASE: <strong id="data-base-val">20/11/2026</strong></span>
+          <span>DATA-BASE: <strong id="data-base-val">18/11/2026</strong></span>
           <span>REDE MONITORADA: <strong>17 ETECs</strong></span>
-          <span id="data-source-badge">FONTE: <strong>SIGEDUCA / CEE-MT (397 ATOS · 795 PROCESSOS SIPE)</strong></span>
+          <span id="data-source-badge">BASE OFICIAL: <strong>SIGEDUCA / CEE-MT</strong></span>
         </div>
         <div class="header-btn-row">
           <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha">
@@ -1252,16 +1385,18 @@ header.title-band {
             Sincronizar Planilha
           </button>
           
-          <button type="button" class="btn btn-header-outline" onclick="toggleImportDrawer()">
+          <button type="button" class="btn btn-header-outline" onclick="toggleImportDrawer()" title="Importar dados do SIGEDUCA">
             <i data-lucide="upload" aria-hidden="true" style="width:16px;height:16px;"></i>
             Importar Dados SIGEDUCA
           </button>
-          <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()">
+          
+          <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()" title="Exportar dados filtrados em CSV">
             <i data-lucide="download" aria-hidden="true" style="width:16px;height:16px;"></i>
             Exportar Relatório CSV
           </button>
         </div>
       </div>
+
     </div>
   </header>
   
