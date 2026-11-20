@@ -866,20 +866,16 @@
       </div>
       <div class="header-meta-actions">
         <div class="header-meta-strip">
-          <span>DATA-BASE: <strong>18/11/2026</strong></span>
+          <span>DATA-BASE: <strong id="data-base-val"> 18/11/2026</strong></span>
           <span>REDE MONITORADA: <strong>17 ETECs</strong></span>
-          <span id="data-source-badge">FONTE: <strong>BASE REFERENCIAL SIGEDUCA/SIPE</strong></span>
+         <span id="data-source-badge">BASE OFICIAL: <strong>SIGEDUCA / CEE-MT</strong></span>
         </div>
         <div class="header-btn-row">
           <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha Google">
             <i data-lucide="refresh-cw" aria-hidden="true" style="width:16px;height:16px;"></i>
-            Sincronizar Planilha
+            Sincronizar Dados
           </button>
           
-          <button type="button" class="btn btn-header-outline" onclick="toggleImportDrawer()">
-            <i data-lucide="upload" aria-hidden="true" style="width:16px;height:16px;"></i>
-            Importar Dados SIGEDUCA
-          </button>
           <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()">
             <i data-lucide="download" aria-hidden="true" style="width:16px;height:16px;"></i>
             Exportar Relatório CSV
@@ -1299,7 +1295,7 @@
     <footer class="footer-note">
       <div>
         <strong style="color:var(--on-surface);">Metodologia SIPE Flow MT & Arquitetura de Coleta:</strong>
-        Os dados estruturais seguem o modelo oficial dos robôs <code>bot-atos-seduc</code> (extração paginada de <code>wmceeinfinstensino.aspx</code> mantendo o ato mais recente por par Município + Curso Técnico) e <code>bot-processos-seduc</code> (9 colunas oficiais do SIPE), integrados via Google Apps Script para disparo automático de alertas no Google Chat e comunicados formais por e-mail da Coordenadoria de Fiscalização (<code>coordenadoriadefiscalizacao@secitec.mt.gov.br</code>). Os registros exibidos inicialmente constituem uma base referencial operacional calibrada para a data-base de 18/11/2026 (incluindo o caso-teste da Portaria 123/2024 de Rondonópolis), podendo ser substituídos a qualquer momento pelo botão <em>Importar Dados SIGEDUCA</em>.
+        Os dados estruturais seguem o modelo oficial dos robôs <code>bot-atos-seduc</code> (extração paginada de <code>wmceeinfinstensino.aspx</code> mantendo o ato mais recente por par Município + Curso Técnico) e <code>bot-processos-seduc</code> (9 colunas oficiais do SIPE), integrados via Google Apps Script para disparo automático de alertas no Google Chat e comunicados formais por e-mail da Coordenadoria de Fiscalização (<code>coordenadoriadefiscalizacao@secitec.mt.gov.br</code>). Os registros exibidos inicialmente constituem uma base referencial operacional calibrada para a data-base de 18/11/2026 (incluindo o caso-teste da Portaria 123/2024 de Rondonópolis), podendo ser substituídos a qualquer momento pelo botão <em>function initApp()</em>.
       </div>
       <div>
         <strong style="color:var(--on-surface);">Fontes Documentais:</strong>
@@ -1622,7 +1618,7 @@
       }
 
       if (atosCarregados || processosCarregados) {
-        appState.customSourceLabel = 'PLANILHA GOOGLE ON-LINE (' + appState.atos.length + ' ATOS · ' + appState.processos.length + ' PROCESSOS SIPE)';
+        appState.customSourceLabel = 'PLANILHA ON-LINE (' + appState.atos.length + ' ATOS · ' + appState.processos.length + ' PROCESSOS SIPE)';
         return true;
       }
       return false;
@@ -3254,6 +3250,10 @@
     async function initApp() {
       await loadSavedState();
       await carregarDadosPlanilhaOnline();
+      var elData = document.getElementById('data-base-val'); 
+      if (elData) { 
+      elData.textContent = new Date().toLocaleDateString('pt-BR'); 
+      }
       populateEtecDropdown();
       syncFilterControlsFromState();
 
