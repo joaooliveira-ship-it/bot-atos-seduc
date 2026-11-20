@@ -1352,6 +1352,123 @@ header.title-band {
   filter: brightness(1.08) !important;
   box-shadow: 0 4px 12px rgba(212, 175, 55, 0.35) !important;
 }
+    /* Container Principal do Cabeçalho */
+    .title-band {
+      background: #0f1f38 !important;
+      border-bottom: 2px solid rgba(212, 160, 23, 0.4) !important;
+      padding: 1.25rem 2rem !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .title-band-inner {
+      max-width: 1750px !important;
+      margin: 0 auto !important;
+      display: flex !important;
+      align-items: flex-start !important;
+      justify-content: space-between !important;
+      gap: 2rem !important;
+      flex-wrap: wrap !important;
+    }
+
+    /* Coluna Esquerda: Logos e Título */
+    .header-branding {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.85rem !important;
+    }
+
+    /* Grupo de Logos Lado a Lado */
+    .header-logos-group {
+      display: flex !important;
+      align-items: center !important;
+      gap: 1.5rem !important;
+    }
+
+    /* Logo SECITECI no Tamanho Real Oficial do Portal MT */
+    .header-logo-seciteci {
+      height: 90px !important;
+      width: auto !important;
+      max-width: 360px !important;
+      object-fit: contain !important;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)) !important;
+    }
+
+    /* Divisória Vertical Entre as Logos */
+    .logo-divider {
+      width: 2px !important;
+      height: 65px !important;
+      background: rgba(255, 255, 255, 0.25) !important;
+    }
+
+    /* Logo Oficial do SIPE Flow Ampliada e Nítida */
+    .header-logo-sipe {
+      width: 76px !important;
+      height: 76px !important;
+      border-radius: 14px !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+      object-fit: cover !important;
+    }
+
+    /* Título Institucional Alinhado Abaixo das Logos */
+    .header-main-title {
+      color: #ffffff !important;
+      font-size: 1.35rem !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.04em !important;
+      text-transform: uppercase !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      text-align: left !important;
+      line-height: 1.25 !important;
+      font-family: inherit !important;
+    }
+
+    /* Coluna Direita: Metadados Compactos e Botões na Base */
+    .header-meta-actions {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      justify-content: space-between !important;
+      gap: 1.2rem !important;
+      margin-left: auto !important;
+    }
+
+    /* Faixa de Metadados Reduzida e Discreta (Anti-Poluição) */
+    .header-meta-strip {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.75rem !important;
+      background: rgba(255, 255, 255, 0.07) !important;
+      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+      padding: 0.35rem 0.85rem !important;
+      border-radius: 6px !important;
+      font-size: 0.72rem !important; /* Tamanho reduzido e refinado */
+      color: #cbd5e1 !important;
+      letter-spacing: 0.02em !important;
+      white-space: nowrap !important;
+    }
+
+    .header-meta-strip strong {
+      color: #ffffff !important;
+      font-weight: 700 !important;
+    }
+
+    /* Linha de Botões Alinhada no Canto Inferior Direito */
+    .header-btn-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0.65rem !important;
+      flex-wrap: wrap !important;
+    }
+
+    .btn-header-outline, .btn-header-brass {
+      font-size: 0.8rem !important;
+      padding: 0.5rem 0.95rem !important;
+      font-weight: 600 !important;
+    }
   </style>
 </head>
 <body>
@@ -1360,38 +1477,44 @@ header.title-band {
   <header class="title-band">
     <div class="title-band-inner">
       
-      <!-- CANTO ESQUERDO: LOGOS NO TOPO + TÍTULO LOGO ABAIXO -->
-      <div class="header-left-col">
-        <div class="header-logos-row">
-          <!-- Régua Oficial SECITECI / Governo de MT -->
+      <!-- LADO ESQUERDO: LOGOS OFICIAIS + TÍTULO ALINHADO ABAIXO -->
+      <div class="header-branding">
+        <div class="header-logos-group">
+          <!-- Régua Oficial SECITECI / Governo de MT (Tamanho do Portal MT) -->
           <img src="layout_set_logo.png" alt="SECITECI — Governo de Mato Grosso" class="header-logo-seciteci">
           <span class="logo-divider" aria-hidden="true"></span>
-          <!-- Identidade Oficial SIPE Flow MT -->
+          <!-- Logo Oficial do SIPE Flow MT Ampliada -->
           <img src="sipe_flow_icon_oficial.png" alt="SIPE Flow MT" class="header-logo-sipe">
         </div>
-        <h1 class="header-title-clean">MONITORAMENTO REGULATÓRIO DAS 17 ETECS</h1>
+        <!-- Título em Linha Direta Abaixo das Logos -->
+        <h1 class="header-main-title">MONITORAMENTO REGULATÓRIO DAS 17 ETECS</h1>
       </div>
 
-      <!-- CANTO DIREITO: METADADOS NO TOPO + 3 BOTÕES NO CANTO INFERIOR DIREITO -->
-      <div class="header-right-col">
+      <!-- LADO DIREITO: METADADOS DISCRETOS NO TOPO + 3 BOTÕES NO CANTO INFERIOR DIREITO -->
+      <div class="header-meta-actions">
+        <!-- Metadados Discretos e Compactos -->
         <div class="header-meta-strip">
-          <span>DATA-BASE: <strong id="data-base-val">18/11/2026</strong></span>
+          <span>DATA-BASE: <strong id="data-base-val">20/11/2026</strong></span>
+          <span aria-hidden="true">·</span>
           <span>REDE MONITORADA: <strong>17 ETECs</strong></span>
-          <span id="data-source-badge">BASE OFICIAL: <strong>SIGEDUCA / CEE-MT</strong></span>
+          <span aria-hidden="true">·</span>
+          <span id="data-source-badge">FONTE: <strong>SIGEDUCA / CEE-MT</strong> (397 ATOS · 795 PROCESSOS SIPE)</span>
         </div>
+
+        <!-- Os 3 Botões Originais Mantidos no Canto Inferior Direito -->
         <div class="header-btn-row">
           <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha">
-            <i data-lucide="refresh-cw" aria-hidden="true" style="width:16px;height:16px;"></i>
+            <i data-lucide="refresh-cw" aria-hidden="true" style="width:15px;height:15px;"></i>
             Sincronizar Planilha
           </button>
           
-          <button type="button" class="btn btn-header-outline" onclick="toggleImportDrawer()" title="Importar dados do SIGEDUCA">
-            <i data-lucide="upload" aria-hidden="true" style="width:16px;height:16px;"></i>
+          <button type="button" class="btn btn-header-outline" onclick="toggleImportDrawer()" title="Importar base externa SIGEDUCA">
+            <i data-lucide="upload" aria-hidden="true" style="width:15px;height:15px;"></i>
             Importar Dados SIGEDUCA
           </button>
-          
-          <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()" title="Exportar dados filtrados em CSV">
-            <i data-lucide="download" aria-hidden="true" style="width:16px;height:16px;"></i>
+
+          <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()" title="Exportar dados filtrados">
+            <i data-lucide="download" aria-hidden="true" style="width:15px;height:15px;"></i>
             Exportar Relatório CSV
           </button>
         </div>
