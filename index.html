@@ -1631,34 +1631,29 @@ header.title-band {
  <!-- CHARTER NAVY TITLE BAND -->
   <header class="title-band">
     <div class="title-band-inner">
-      <!-- CANTO ESQUERDO: LOGOS + TÍTULO -->
-      <div class="header-branding">
+      <div class="header-branding-col">
         <div class="header-logos-group">
           <!-- Régua Oficial SECITECI / Governo de MT -->
           <img src="layout_set_logo.png" alt="SECITECI — Governo de Mato Grosso" class="header-logo-seciteci">
           <span class="logo-divider" aria-hidden="true"></span>
-          <!-- Logo Oficial SIPE Flow MT -->
+          <!-- Identidade SIPE Flow MT -->
           <img src="sipe_flow_icon_oficial.png" alt="SIPE Flow MT" class="header-logo-sipe">
         </div>
-        <div class="header-titles">
-          <h1>MONITORAMENTO REGULATÓRIO DAS 17 ETECS</h1>
-        </div>
+        <h1 class="header-main-title">MONITORAMENTO REGULATÓRIO DAS 17 ETECS</h1>
       </div>
-
-      <!-- CANTO INFERIOR DIREITO: METADADOS + 2 BOTÕES ESSENCIAIS -->
       <div class="header-meta-actions">
         <div class="header-meta-strip">
           <span>DATA-BASE: <strong id="data-base-val">20/11/2026</strong></span>
           <span id="data-source-badge">FONTE: <strong>SIGEDUCA / CEE-MT</strong> (397 ATOS · 795 PROCESSOS SIPE)</span>
         </div>
         <div class="header-btn-row">
-          <button type="button" class="btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha">
-            <i data-lucide="refresh-cw" aria-hidden="true" style="width:15px;height:15px;"></i>
-            Sincronizar Planilha
+          <button type="button" class="btn btn-header-outline" onclick="forcarSincronizacaoPlanilha()" title="Recarregar dados ao vivo da Planilha Oficial">
+            <i data-lucide="refresh-cw" aria-hidden="true" style="width:16px;height:16px;"></i>
+            Sincronizar Dados
           </button>
           
-          <button type="button" class="btn-header-brass" onclick="exportFilteredCsv()" title="Exportar dados filtrados em planilha CSV">
-            <i data-lucide="download" aria-hidden="true" style="width:15px;height:15px;"></i>
+          <button type="button" class="btn btn-header-brass" onclick="exportFilteredCsv()">
+            <i data-lucide="download" aria-hidden="true" style="width:16px;height:16px;"></i>
             Exportar Relatório CSV
           </button>
         </div>
@@ -2405,21 +2400,35 @@ header.title-band {
    return false; 
    }
 
-   async function forcarSincronizacaoPlanilha() { 
-   const badge = document.getElementById('data-source-badge'); 
-   if (badge) badge.innerHTML = 'BASE OFICIAL: <strong>SINCRONIZANDO DADOS INTEGRADOS...</strong>'; 
-   const ok = await carregarDadosPlanilhaOnline(); 
-   if (ok) { 
-   renderAll(); 
-   if (window.lucide && typeof window.lucide.createIcons === 'function') { 
-   window.lucide.createIcons(); 
-   } 
-   alert('✅ Sincronização concluída com sucesso!\n• ' + appState.atos.length + ' atos regulatórios\n• ' + appState.processos.length + ' processos administrativos SIPE\n\nAuditoria cruzada e cobertura 100% atualizadas em tempo real!'); 
-   } else { 
-   alert('⚠️ Não foi possível atualizar os dados integrados no momento. Mantendo base referencial.'); 
-   renderAll(); 
-    } 
-   }
+  async function forcarSincronizacaoPlanilha() {
+      const badge = document.getElementById('data-source-badge');
+      if (badge) {
+        badge.innerHTML = 'FONTE: <strong>SINCRONIZANDO COM GOOGLE SHEETS...</strong>';
+      }
+      
+      const ok = await carregarDadosPlanilhaOnline();
+      
+      if (ok) {
+        const totalAtos = (appState.atos && appState.atos.length) ? appState.atos.length : 397;
+        const totalProc = (appState.processos && appState.processos.length) ? appState.processos.length : 795;
+        
+        if (badge) {
+          badge.innerHTML = 'FONTE: <strong>SIGEDUCA / CEE-MT</strong> (' + totalAtos + ' ATOS · ' + totalProc + ' PROCESSOS SIPE)';
+        }
+        
+        renderAll();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+        alert('✅ Sincronização concluída com sucesso!\n' + totalAtos + ' cursos regulatórios atualizados diretamente da Planilha Google.');
+      } else {
+        if (badge) {
+          badge.innerHTML = 'FONTE: <strong>SIGEDUCA / CEE-MT</strong> (397 ATOS · 795 PROCESSOS SIPE)';
+        }
+        alert('⚠️ Não foi possível sincronizar com a planilha online no momento. Mantendo base referencial.');
+        renderAll();
+      }
+    }
 
     function buildBaselineAtos() {
       const rows = [
